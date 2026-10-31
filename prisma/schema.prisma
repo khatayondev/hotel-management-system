@@ -137,7 +137,7 @@ model Service {
   bufferMin     Int             @default(0)
   pricePesewas  Int
   depositType   DepositType     @default(PERCENTAGE)
-  depositValue  Int             @default(50)
+  depositValue  Int             @default(30)
   active        Boolean         @default(true)
   deletedAt     DateTime?
   createdAt     DateTime        @default(now())

@@ -25,8 +25,14 @@ export function buildBookingConfirmedEmail(params: BookingConfirmationEmailParam
     <p style="margin: 0 0 14px 0;">
       Your appointment at <strong>Becca&apos;s Crown Beauty Vault</strong> has been confirmed. Our specialists look forward to giving you an unforgettable artistry experience.
     </p>
+    <div style="margin: 0 0 16px 0; padding: 14px; background-color: #FBFBFC; border-left: 3px solid #1E1E1E; border-radius: 8px; font-size: 12px; color: #374151; line-height: 1.6;">
+      <strong>Important Studio Guidelines:</strong><br/>
+      • <strong>10-Min Early Arrival:</strong> Please arrive 10 minutes prior to your scheduled time.<br/>
+      • <strong>Solo Clients Only:</strong> Only the person receiving the service is permitted in the studio (strictly no extra guests or friends).<br/>
+      • <strong>Cancellation Window:</strong> Appointments are automatically cancelled after 30 minutes late, and the 30% deposit is non-refundable.
+    </div>
     <p style="margin: 0 0 14px 0;">
-      Please arrive 10 minutes prior to your scheduled time. You can easily view your booking details, add to your calendar, settle remaining balance, or reschedule online anytime using your self-service booking pass below.
+      You can easily view your booking details, add to your calendar, settle remaining balance, or reschedule online anytime using your self-service booking pass below.
     </p>
   `;
 
@@ -201,13 +207,13 @@ export function buildAppointmentReminderEmail(params: AppointmentReminderEmailPa
       Friendly reminder that your luxury artistry session for <strong>${params.serviceName}</strong> is scheduled for <strong>${params.dateFormatted} at ${params.timeFormatted}</strong>.
     </p>
     <p style="margin: 0 0 10px 0;">
-      <strong>Studio Preparation Instructions:</strong>
+      <strong>Studio Preparation Instructions &amp; Policies:</strong>
     </p>
     <ul style="margin: 0 0 16px 0; padding-left: 20px; line-height: 1.8; color: #4b5563; font-size: 13px;">
-      <li>Please arrive 10 minutes prior to your appointment time.</li>
-      <li>For hair &amp; braids: please arrive with hair thoroughly washed, conditioned, and detangled.</li>
-      <li>For lash artistry: avoid oil-based cleansers and eye makeup prior to your session.</li>
-      <li>Complimentary refreshments await you at our Ghana studio.</li>
+      <li><strong>10-Min Early Arrival:</strong> Please arrive 10 minutes prior to your appointment time (appointments are cancelled if 30 minutes late).</li>
+      <li><strong>Solo Client Policy:</strong> Only the person receiving the service is permitted in the studio (strictly no accompanying friends or guests).</li>
+      <li><strong>For hair &amp; braids:</strong> please arrive with hair thoroughly washed, conditioned, and detangled.</li>
+      <li><strong>For lash artistry:</strong> avoid oil-based cleansers and eye makeup prior to your session.</li>
     </ul>
     <p style="margin: 0;">
       If you need to adjust your time, you may view or reschedule using your booking pass below.

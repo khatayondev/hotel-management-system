@@ -263,7 +263,7 @@ async function main() {
         bufferMin: 15,
         pricePesewas: 55000, // GH₵ 550.00
         depositType: DepositType.PERCENTAGE,
-        depositValue: 50, // 50% deposit
+        depositValue: 30, // 30% deposit
       },
     });
   }
@@ -279,7 +279,7 @@ async function main() {
         bufferMin: 15,
         pricePesewas: 28000, // GH₵ 280.00
         depositType: DepositType.PERCENTAGE,
-        depositValue: 50,
+        depositValue: 30,
       },
     });
   }
@@ -295,7 +295,7 @@ async function main() {
         bufferMin: 30,
         pricePesewas: 35000, // GH₵ 350.00
         depositType: DepositType.PERCENTAGE,
-        depositValue: 50,
+        depositValue: 30,
       },
     });
   }
@@ -395,7 +395,7 @@ async function main() {
             deletedAt: null,
             order: sIdx + 1,
             depositType: DepositType.PERCENTAGE,
-            depositValue: 50,
+            depositValue: 30,
           },
         });
       } else {
@@ -410,7 +410,7 @@ async function main() {
             active: true,
             order: sIdx + 1,
             depositType: DepositType.PERCENTAGE,
-            depositValue: 50,
+            depositValue: 30,
           },
         });
       }

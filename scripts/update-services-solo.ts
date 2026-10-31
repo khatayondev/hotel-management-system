@@ -296,7 +296,7 @@ async function main() {
             deletedAt: null,
             order: sIdx + 1,
             depositType: DepositType.PERCENTAGE,
-            depositValue: 50, // 50% booking deposit standard
+            depositValue: 30, // 30% booking deposit standard
           },
         });
       } else {
@@ -311,7 +311,7 @@ async function main() {
             active: true,
             order: sIdx + 1,
             depositType: DepositType.PERCENTAGE,
-            depositValue: 50,
+            depositValue: 30,
           },
         });
       }

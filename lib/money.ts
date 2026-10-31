@@ -84,7 +84,7 @@ export function calculateDeposit(
     case "FULL":
       return pricePesewas;
     case "PERCENTAGE": {
-      const percentage = depositValue ?? 50; // default 50%
+      const percentage = depositValue ?? 30; // default 30%
       if (percentage <= 0 || percentage > 100) {
         throw new Error(`Invalid percentage deposit value: ${percentage}`);
       }

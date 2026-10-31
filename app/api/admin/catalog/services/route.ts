@@ -15,7 +15,7 @@ const createServiceSchema = z.object({
   bufferMin: z.number().int().min(0, "Buffer minutes cannot be negative").default(0),
   pricePesewas: z.number().int().min(100, "Price must be at least GH₵ 1.00 (100 pesewas)"),
   depositType: z.enum(["NONE", "FULL", "PERCENTAGE", "FIXED"]).default("PERCENTAGE"),
-  depositValue: z.number().int().min(0, "Deposit value cannot be negative").default(50),
+  depositValue: z.number().int().min(0, "Deposit value cannot be negative").default(30),
   active: z.boolean().default(true),
   order: z.number().int().default(0),
   staffIds: z.array(z.string().uuid()).default([]),

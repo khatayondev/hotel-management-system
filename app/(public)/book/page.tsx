@@ -470,7 +470,7 @@ function BookingWizardContent() {
   }, [selectedServices, selectedAddons]);
 
   const depositPesewas = React.useMemo(() => {
-    return Math.round(subtotalPesewas * 0.5);
+    return Math.round(subtotalPesewas * 0.3);
   }, [subtotalPesewas]);
 
   // Fetch Slots when Date, Services, or Staff changes on Step 2
@@ -1569,7 +1569,7 @@ function BookingWizardContent() {
                     </div>
                   </div>
 
-                  {/* Payment Type Selection (50% Deposit vs Full) */}
+                  {/* Payment Type Selection (30% Deposit vs Full) */}
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
                       Choose Payment Amount
@@ -1584,7 +1584,7 @@ function BookingWizardContent() {
                             : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200/80"
                         }`}
                       >
-                        <span className="text-[10px] uppercase block opacity-75">Pay 50% Deposit</span>
+                        <span className="text-[10px] uppercase block opacity-75">Pay 30% Deposit</span>
                         <span className="text-xs font-black block mt-0.5 font-poppins">
                           {formatPesewas(depositPesewas)}
                         </span>

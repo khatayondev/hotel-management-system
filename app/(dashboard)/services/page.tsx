@@ -103,7 +103,7 @@ export default function ServicesPage() {
   const [svcBuffer, setSvcBuffer] = React.useState("15");
   const [svcPriceGhs, setSvcPriceGhs] = React.useState("300");
   const [svcDepositType, setSvcDepositType] = React.useState<"NONE" | "FULL" | "PERCENTAGE" | "FIXED">("PERCENTAGE");
-  const [svcDepositValue, setSvcDepositValue] = React.useState("50");
+  const [svcDepositValue, setSvcDepositValue] = React.useState("30");
   const [svcActive, setSvcActive] = React.useState(true);
   const [svcSelectedStaff, setSvcSelectedStaff] = React.useState<string[]>([]);
 
@@ -195,7 +195,7 @@ export default function ServicesPage() {
       setSvcBuffer("15");
       setSvcPriceGhs("250");
       setSvcDepositType("PERCENTAGE");
-      setSvcDepositValue("50");
+      setSvcDepositValue("30");
       setSvcActive(true);
       setSvcSelectedStaff(staffMembers.map((s) => s.id));
     }

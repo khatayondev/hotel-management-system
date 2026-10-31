@@ -101,7 +101,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: DefaultTemplateDefinition[] = [
     channel: "SMS",
     event: "reminder_24h",
     template:
-      "Reminder: Hello {{name}}, your appointment for {{service}} is tomorrow, {{date}} at {{time}} (Ref: {{reference}}). Amount due: {{amountDue}}. Manage: {{manageLink}}",
+      "Reminder: Hello {{name}}, your appointment for {{service}} is tomorrow, {{date}} at {{time}}. Please arrive 10 mins early (solo clients only). Ref: {{reference}}. Manage: {{manageLink}}",
     variables: ["name", "service", "date", "time", "reference", "amountDue", "manageLink"],
     description: "Sent 24 hours before appointment start time",
   },
@@ -124,7 +124,7 @@ export const DEFAULT_NOTIFICATION_TEMPLATES: DefaultTemplateDefinition[] = [
     channel: "SMS",
     event: "reminder_2h",
     template:
-      "See you soon! Hello {{name}}, your {{service}} appointment starts in 2 hours at {{time}} (Ref: {{reference}}). Directions & info: {{manageLink}}",
+      "See you soon! Hello {{name}}, your {{service}} starts in 2 hours at {{time}}. Please arrive 10m early (solo clients only; cancelled if 30m late). Ref: {{reference}}: {{manageLink}}",
     variables: ["name", "service", "time", "reference", "manageLink"],
     description: "Sent 2 hours before appointment start time",
   },
