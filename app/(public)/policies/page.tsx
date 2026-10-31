@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, Clock, RefreshCw, AlertCircle, Crown, ArrowRight } from "lucide-react";
+import { ShieldCheck, Clock, RefreshCw, AlertCircle, Crown, ArrowRight, UserCheck, Sparkles, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
@@ -7,40 +7,40 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 export const metadata = {
   title: "Policies & Terms | Becca's Crown Beauty Vault",
   description:
-    "Review our transparent studio policies: 24h cancellations, rescheduling, deposit security, punctuality, and dress rental care in Accra, Ghana.",
+    "Review our transparent studio policies: 30% non-refundable deposit, punctuality rules, solo client policy, hygiene standards, and rescheduling in Accra, Ghana.",
 };
 
 export default function PoliciesPage() {
   const policies = [
     {
+      icon: ShieldCheck,
+      title: "Mandatory 30% Non-Refundable Deposit",
+      desc: "All reservations require a non-refundable 30% deposit to lock in your artist, equipment, and time slot. When you select a slot in our booking wizard, it is held while payment is processed securely via Paystack. The remaining 70% balance is payable upon arrival.",
+    },
+    {
       icon: Clock,
-      title: "Punctuality & 15-Minute Grace Period",
-      desc: "To respect all clients' schedules, we observe a strict 15-minute grace period. If you arrive more than 15 minutes past your appointment start time, your service duration may be adjusted or rescheduled to avoid delaying subsequent clients.",
+      title: "Punctuality & 30-Minute Cancellation",
+      desc: "Clients are required to arrive 10 minutes prior to their scheduled start time to ensure a seamless prep and consultation. If you arrive 30 minutes late, your appointment will be automatically cancelled and your deposit forfeited to protect subsequent client schedules.",
+    },
+    {
+      icon: UserCheck,
+      title: "Solo Client Policy (Strictly No Plus-Ones)",
+      desc: "To preserve an intimate, tranquil, and hygienic studio atmosphere, only the individual receiving the scheduled service is permitted inside the studio. Friends, partners, and family members not booked for an active service cannot enter the treatment area or waiting lounge.",
     },
     {
       icon: RefreshCw,
-      title: "Cancellation & Rescheduling Window",
-      desc: "We understand plans can change. You can cancel or reschedule your booking free of charge up to 24 hours prior to your scheduled start time. Your deposit will be fully refunded or credited towards your next booking.",
+      title: "Rescheduling & Deposit Transfer",
+      desc: "We understand unexpected schedule shifts occur. You may reschedule your appointment up to 24 hours prior to your scheduled time to transfer your deposit once to a new date within 30 days. Reschedules requested under 24 hours forfeit the deposit.",
     },
     {
-      icon: ShieldCheck,
-      title: "Deposit & Payment Security",
-      desc: "All reservations require a deposit (or full payment) to lock in your artist and time slot. When you select a slot in our booking wizard, it is held for 10 minutes while you complete payment. Payments are processed securely via Paystack with instant MTN MoMo, Telecel Cash, and Card verification.",
+      icon: Sparkles,
+      title: "Client Preparation & Hygiene Standards",
+      desc: "For lash and brow services, please arrive with completely clean, oil-free eyes free of mascara or glue. For hair services, arrive with clean, detangled hair unless instructed otherwise. Please notify your specialist of any allergies or skin sensitivities beforehand.",
     },
     {
-      icon: Crown,
-      title: "Hygiene & Sanitation Standards",
-      desc: "Your health is paramount. All metal lash and brow implements undergo hospital-grade sterilization between clients. We use disposable spoolies, applicators, and sanitize all studio chairs and high-touch surfaces continuously.",
-    },
-    {
-      icon: AlertCircle,
-      title: "Dress Rental Terms & Care",
-      desc: "Gowns are rented for a standard 3-day window. Professional dry cleaning is included in the rental fee—do not attempt to clean or iron couture garments at home. A refundable security deposit is inspected upon return.",
-    },
-    {
-      icon: Crown,
-      title: "No Account Required",
-      desc: "We prioritize your privacy and speed. You will never be asked to create a username, memorize a password, or download an application. Your booking details and SMS notifications are tied directly to your Ghana phone number.",
+      icon: Camera,
+      title: "Photography & Media Courtesy",
+      desc: "We love capturing and celebrating our artistry! Photos or short videos of your completed glam may be taken for our professional portfolio and social channels. If you prefer not to appear on camera, simply inform your artist at the start of your session.",
     },
   ];
 

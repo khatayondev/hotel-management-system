@@ -1620,7 +1620,7 @@ function BookingWizardContent() {
                       <Link href="/policies" target="_blank" className="text-zinc-950 underline font-bold">
                         Studio Policies
                       </Link>
-                      , including the 24-hr reschedule window and 15-min grace period.
+                      , including the 30% non-refundable deposit, 10-min early arrival requirement, and solo client policy.
                     </span>
                   </label>
                 </div>

@@ -229,3 +229,4 @@ export default function ResetPasswordPage() {
     </React.Suspense>
   );
 }
+
