@@ -114,10 +114,6 @@ function ResetPasswordForm() {
           ) : (
             <div>
               <div className="mb-6 space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 text-[10px] font-bold mb-2">
-                  <KeyRound className="w-3 h-3 text-amber-600" />
-                  <span>Secure Account Recovery</span>
-                </div>
                 <h2 className="text-xl font-black text-[#1E1E1E] tracking-tight">Set New Password</h2>
                 <p className="text-xs text-[#71717A]">
                   Enter a new strong password below to regain access to the studio portal.
