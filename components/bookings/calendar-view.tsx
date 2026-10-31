@@ -31,6 +31,13 @@ export function BookingCalendarView({
   const [dragOverSlot, setDragOverSlot] = React.useState<string | null>(null);
   const [conflictError, setConflictError] = React.useState<string | null>(null);
 
+  // Optimistic local state for 0ms instantaneous snapping
+  const [localBookings, setLocalBookings] = React.useState<BookingRecord[]>(bookings);
+
+  React.useEffect(() => {
+    setLocalBookings(bookings);
+  }, [bookings]);
+
   const safeStaff = Array.isArray(staffList) ? staffList : [];
 
   // Compute dates for Week View (Monday to Sunday)
@@ -62,6 +69,11 @@ export function BookingCalendarView({
     e.dataTransfer.effectAllowed = "move";
   };
 
+  const handleDragEnd = () => {
+    setDraggedBooking(null);
+    setDragOverSlot(null);
+  };
+
   const handleDragOver = (e: React.DragEvent, slotKey: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -75,34 +87,61 @@ export function BookingCalendarView({
     setDragOverSlot(null);
     if (!draggedBooking) return;
 
+    const movingBooking = draggedBooking;
+    setDraggedBooking(null);
+
+    // Calculate target start time in UTC
+    const start = new Date(targetDateStr);
+    start.setUTCHours(hour, 0, 0, 0);
+
+    // Preserve original booking duration
+    const origStart = new Date(movingBooking.startUtc).getTime();
+    const origEnd = new Date(movingBooking.endUtc).getTime();
+    const durationMs = Math.max(30 * 60 * 1000, origEnd - origStart);
+
+    const end = new Date(start.getTime() + durationMs);
+    const newStartUtc = start.toISOString();
+    const newEndUtc = end.toISOString();
+
+    // OPTIMISTIC SNAP: Instantly update calendar state (0ms delay)
+    const prevLocal = localBookings;
+    setLocalBookings((prev) =>
+      prev.map((b) => {
+        if (b.id !== movingBooking.id) return b;
+        const assignedStaff = targetStaffId ? safeStaff.find((s) => s.id === targetStaffId) : undefined;
+        return {
+          ...b,
+          startUtc: newStartUtc,
+          endUtc: newEndUtc,
+          ...(targetStaffId && assignedStaff
+            ? {
+                staffId: targetStaffId,
+                staff: assignedStaff,
+              }
+            : {}),
+        };
+      })
+    );
+
     try {
-      // Calculate target start time in UTC
-      const start = new Date(targetDateStr);
-      start.setUTCHours(hour, 0, 0, 0);
-
-      // Preserve original booking duration
-      const origStart = new Date(draggedBooking.startUtc).getTime();
-      const origEnd = new Date(draggedBooking.endUtc).getTime();
-      const durationMs = Math.max(30 * 60 * 1000, origEnd - origStart);
-
-      const end = new Date(start.getTime() + durationMs);
-
       const result = await onReschedule(
-        draggedBooking.id,
-        start.toISOString(),
-        end.toISOString(),
+        movingBooking.id,
+        newStartUtc,
+        newEndUtc,
         targetStaffId
       );
 
-      if (!result.success && result.error) {
-        setConflictError(result.error);
+      if (!result.success) {
+        // Revert on conflict/validation error
+        setLocalBookings(prevLocal);
+        setConflictError(result.error || "Rescheduling conflict or outside operating hours");
       } else {
         setConflictError(null);
       }
     } catch (err) {
+      // Revert on network failure
+      setLocalBookings(prevLocal);
       setConflictError(err instanceof Error ? err.message : "Failed to reschedule");
-    } finally {
-      setDraggedBooking(null);
     }
   };
 
@@ -139,7 +178,7 @@ export function BookingCalendarView({
               })}
             </h3>
             <span className="text-xs text-zinc-500 font-medium">
-              {bookings.length} {bookings.length === 1 ? "Appointment" : "Appointments"}
+              {localBookings.length} {localBookings.length === 1 ? "Appointment" : "Appointments"}
             </span>
           </div>
 
@@ -149,8 +188,8 @@ export function BookingCalendarView({
               const slotKey = `day-${selectedDate}-${hour}`;
               const isDragOver = dragOverSlot === slotKey;
 
-              // Filter bookings in this hour
-              const slotBookings = bookings.filter((b) => {
+              // Filter bookings in this hour from optimistic localBookings
+              const slotBookings = localBookings.filter((b) => {
                 const bDate = b.startUtc.split("T")[0];
                 const bHour = new Date(b.startUtc).getUTCHours();
                 return bDate === selectedDate && bHour === hour;
@@ -161,8 +200,8 @@ export function BookingCalendarView({
                   key={hour}
                   onDragOver={(e) => handleDragOver(e, slotKey)}
                   onDrop={(e) => handleDrop(e, selectedDate, hour)}
-                  className={`flex min-h-[76px] transition-colors ${
-                    isDragOver ? "bg-zinc-100 border-2 border-dashed border-black/30" : "hover:bg-zinc-50/50"
+                  className={`flex min-h-[76px] transition-all duration-150 ${
+                    isDragOver ? "bg-amber-50/60 border-2 border-dashed border-amber-500/60" : "hover:bg-zinc-50/50"
                   }`}
                 >
                   <div className="w-18 p-3 border-r border-zinc-100 text-xs font-mono text-zinc-400 font-bold select-none shrink-0">
@@ -174,10 +213,17 @@ export function BookingCalendarView({
                         key={b.id}
                         booking={b}
                         canDrag={canEdit}
+                        isDragging={draggedBooking?.id === b.id}
                         onDragStart={(e) => handleDragStart(e, b)}
+                        onDragEnd={handleDragEnd}
                         onClick={() => onSelectBooking(b.id)}
                       />
                     ))}
+                    {isDragOver && draggedBooking && (
+                      <div className="p-2.5 rounded-2xl bg-black/5 border-2 border-dashed border-zinc-800 text-[10px] font-bold text-zinc-700 flex items-center justify-center animate-pulse min-h-[60px] min-w-[180px]">
+                        Snap to {hourLabel}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -220,7 +266,7 @@ export function BookingCalendarView({
                     {weekDays.map((d) => {
                       const slotKey = `week-${d.iso}-${hour}`;
                       const isDragOver = dragOverSlot === slotKey;
-                      const dayBookings = bookings.filter((b) => {
+                      const dayBookings = localBookings.filter((b) => {
                         const bDate = b.startUtc.split("T")[0];
                         const bHour = new Date(b.startUtc).getUTCHours();
                         return bDate === d.iso && bHour === hour;
@@ -231,8 +277,8 @@ export function BookingCalendarView({
                           key={d.iso}
                           onDragOver={(e) => handleDragOver(e, slotKey)}
                           onDrop={(e) => handleDrop(e, d.iso, hour)}
-                          className={`p-1.5 flex flex-col gap-1 transition-colors ${
-                            isDragOver ? "bg-zinc-200 border border-dashed border-black" : "hover:bg-zinc-50/60"
+                          className={`p-1.5 flex flex-col gap-1 transition-all duration-150 ${
+                            isDragOver ? "bg-amber-50/70 border-2 border-dashed border-amber-500/70" : "hover:bg-zinc-50/60"
                           }`}
                         >
                           {dayBookings.map((b) => (
@@ -241,10 +287,17 @@ export function BookingCalendarView({
                               booking={b}
                               compact
                               canDrag={canEdit}
+                              isDragging={draggedBooking?.id === b.id}
                               onDragStart={(e) => handleDragStart(e, b)}
+                              onDragEnd={handleDragEnd}
                               onClick={() => onSelectBooking(b.id)}
                             />
                           ))}
+                          {isDragOver && draggedBooking && (
+                            <div className="p-1 rounded-xl bg-black/5 border border-dashed border-zinc-800 text-[9px] font-bold text-zinc-700 text-center animate-pulse">
+                              Snap here
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -298,7 +351,7 @@ export function BookingCalendarView({
                     {safeStaff.map((s) => {
                       const slotKey = `staff-${s.id}-${hour}`;
                       const isDragOver = dragOverSlot === slotKey;
-                      const staffBookings = bookings.filter((b) => {
+                      const staffBookings = localBookings.filter((b) => {
                         const bDate = b.startUtc.split("T")[0];
                         const bHour = new Date(b.startUtc).getUTCHours();
                         return b.staff.id === s.id && bDate === selectedDate && bHour === hour;
@@ -309,8 +362,8 @@ export function BookingCalendarView({
                           key={s.id}
                           onDragOver={(e) => handleDragOver(e, slotKey)}
                           onDrop={(e) => handleDrop(e, selectedDate, hour, s.id)}
-                          className={`p-1.5 flex flex-col gap-1 transition-colors ${
-                            isDragOver ? "bg-zinc-200 border-2 border-dashed border-black" : "hover:bg-zinc-50/60"
+                          className={`p-1.5 flex flex-col gap-1 transition-all duration-150 ${
+                            isDragOver ? "bg-amber-50/70 border-2 border-dashed border-amber-500/70" : "hover:bg-zinc-50/60"
                           }`}
                         >
                           {staffBookings.map((b) => (
@@ -318,10 +371,17 @@ export function BookingCalendarView({
                               key={b.id}
                               booking={b}
                               canDrag={canEdit}
+                              isDragging={draggedBooking?.id === b.id}
                               onDragStart={(e) => handleDragStart(e, b)}
+                              onDragEnd={handleDragEnd}
                               onClick={() => onSelectBooking(b.id)}
                             />
                           ))}
+                          {isDragOver && draggedBooking && (
+                            <div className="p-1.5 rounded-xl bg-black/5 border border-dashed border-zinc-800 text-[10px] font-bold text-zinc-700 text-center animate-pulse">
+                              Snap to {s.name.split(" ")[0]} ({hourLabel})
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -341,13 +401,17 @@ function BookingCard({
   booking,
   compact = false,
   canDrag = true,
+  isDragging = false,
   onDragStart,
+  onDragEnd,
   onClick,
 }: {
   booking: BookingRecord;
   compact?: boolean;
   canDrag?: boolean;
+  isDragging?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
   onClick: () => void;
 }) {
   const startTime = new Date(booking.startUtc).toLocaleTimeString("en-GB", {
@@ -362,8 +426,11 @@ function BookingCard({
       <div
         draggable={canDrag}
         onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         onClick={onClick}
-        className="p-2 rounded-xl bg-white border border-black/10 hover:border-black shadow-xs cursor-pointer select-none transition-all space-y-1 text-left"
+        className={`p-2 rounded-xl bg-white border border-black/10 hover:border-black shadow-xs cursor-grab active:cursor-grabbing select-none transition-all duration-150 space-y-1 text-left ${
+          isDragging ? "opacity-30 scale-95 border-dashed border-zinc-500 shadow-none" : ""
+        }`}
       >
         <div className="flex items-center justify-between gap-1">
           <span className="font-mono text-[9px] font-bold text-zinc-500">{startTime}</span>
@@ -381,8 +448,11 @@ function BookingCard({
     <div
       draggable={canDrag}
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onClick}
-      className="p-3 rounded-2xl bg-white border border-black/10 hover:border-black/40 hover:shadow-md transition-all shadow-xs cursor-pointer select-none text-left space-y-2 min-w-[220px] max-w-[320px]"
+      className={`p-3 rounded-2xl bg-white border border-black/10 hover:border-black/40 hover:shadow-md transition-all duration-150 shadow-xs cursor-grab active:cursor-grabbing select-none text-left space-y-2 min-w-[220px] max-w-[320px] ${
+        isDragging ? "opacity-30 scale-95 border-dashed border-zinc-500 shadow-none ring-2 ring-black/10" : ""
+      }`}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[10px] font-bold text-zinc-500 flex items-center gap-1">

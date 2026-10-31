@@ -263,13 +263,36 @@ function BookingsContent() {
     };
   }, []);
 
-  // Drag-to-Reschedule handler
+  // Drag-to-Reschedule handler with Instant Optimistic Snapping & Rollback
   const handleReschedule = async (
     bookingId: string,
     newStartUtc: string,
     newEndUtc: string,
     newStaffId?: string
   ): Promise<{ success: boolean; error?: string }> => {
+    // 1. Snapshot previous state for rollback on error
+    const prevBookings = bookings;
+
+    // 2. Optimistically move booking immediately (0ms delay)
+    setBookings((prev) =>
+      prev.map((b) => {
+        if (b.id !== bookingId) return b;
+        const targetStaff = newStaffId ? staffList.find((s) => s.id === newStaffId) : undefined;
+        return {
+          ...b,
+          startUtc: newStartUtc,
+          endUtc: newEndUtc,
+          ...(newStaffId && targetStaff
+            ? {
+                staffId: newStaffId,
+                staff: targetStaff,
+              }
+            : {}),
+        };
+      })
+    );
+
+    // 3. Perform background server sync
     try {
       const res = await fetch(`/api/admin/bookings/${bookingId}/reschedule`, {
         method: "POST",
@@ -283,14 +306,18 @@ function BookingsContent() {
 
       const json = await res.json();
       if (json.success) {
-        setRefreshTrigger((prev) => prev + 1);
         return { success: true };
       }
+
+      // Rollback on conflict or server refusal
+      setBookings(prevBookings);
       return {
         success: false,
-        error: json.error?.message || "Rescheduling conflict or error",
+        error: json.error?.message || "Rescheduling conflict or outside operating hours",
       };
     } catch (err) {
+      // Rollback on network error
+      setBookings(prevBookings);
       return {
         success: false,
         error: err instanceof Error ? err.message : "Network error during reschedule",
