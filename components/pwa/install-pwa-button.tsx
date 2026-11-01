@@ -69,84 +69,53 @@ export function InstallPwaButton({
     };
   }, []);
 
-  const handleInstallClick = async (e: React.MouseEvent) => {
+  const handleInstallClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (isInstalling || installedSuccess) return;
 
-    setIsInstalling(true);
     setNotice(null);
 
-    // 1. Check current state or window global
-    let prompt: BeforeInstallPromptEvent | null | undefined =
+    // 1. Check current state or window global (Must call synchronously within user gesture!)
+    const prompt =
       deferredPrompt ||
       (window as unknown as { __pwaInstallPrompt?: BeforeInstallPromptEvent | null }).__pwaInstallPrompt;
 
-    // 2. If prompt is not ready yet, wait up to 1.5 seconds for it to fire
-    if (!prompt) {
-      prompt = await new Promise<BeforeInstallPromptEvent | null>((resolve) => {
-        let finished = false;
-
-        const onEvent = (ev: Event) => {
-          if (finished) return;
-          finished = true;
-          window.removeEventListener("beforeinstallprompt", onEvent);
-          window.removeEventListener("pwa-prompt-available", onCustomEvent);
-          const p = (ev as CustomEvent).detail || ev;
-          resolve(p as BeforeInstallPromptEvent);
-        };
-
-        const onCustomEvent = (ev: Event) => onEvent(ev);
-
-        window.addEventListener("beforeinstallprompt", onEvent);
-        window.addEventListener("pwa-prompt-available", onCustomEvent);
-
-        setTimeout(() => {
-          if (!finished) {
-            finished = true;
-            window.removeEventListener("beforeinstallprompt", onEvent);
-            window.removeEventListener("pwa-prompt-available", onCustomEvent);
-            const fallback = (window as unknown as { __pwaInstallPrompt?: BeforeInstallPromptEvent }).__pwaInstallPrompt || null;
-            resolve(fallback);
-          }
-        }, 1200);
-      });
-    }
-
-    // 3. If prompt is available, trigger native browser install automatically
+    // 2. If prompt is available, trigger native browser install immediately
     if (prompt) {
       try {
-        await prompt.prompt();
-        const choice = await prompt.userChoice;
-        if (choice.outcome === "accepted") {
-          setInstalledSuccess(true);
-          setDeferredPrompt(null);
-          (window as unknown as { __pwaInstallPrompt?: null }).__pwaInstallPrompt = null;
-        }
+        prompt.prompt().catch((err) => {
+          console.error("Install prompt error:", err);
+        });
+
+        prompt.userChoice.then((choice) => {
+          if (choice.outcome === "accepted") {
+            setInstalledSuccess(true);
+            setDeferredPrompt(null);
+            (window as unknown as { __pwaInstallPrompt?: null }).__pwaInstallPrompt = null;
+          }
+        });
       } catch (err) {
-        console.error("Install prompt error:", err);
-      } finally {
-        setIsInstalling(false);
+        console.error("Install prompt invocation failed:", err);
       }
       return;
     }
 
-    // 4. If browser doesn't expose programmatic install (e.g. Safari on Mac/iOS or Firefox)
-    setIsInstalling(false);
+    // 3. If browser doesn't expose programmatic install (e.g. Safari on Mac/iOS, or app already installed)
     const ua = window.navigator.userAgent.toLowerCase();
     const isSafari = /safari/.test(ua) && !/chrome|chromium|edg/.test(ua);
     const isIos = /iphone|ipad|ipod/.test(ua);
 
     if (isIos) {
-      setNotice("On iPad/iPhone Safari: Tap Share (box with arrow) > 'Add to Home Screen'");
+      setNotice("Apple Safari restriction: Tap the Share button (box with arrow) > 'Add to Home Screen'");
     } else if (isSafari) {
-      setNotice("On Mac Safari: Select File > 'Add to Dock' to install");
+      setNotice("Apple Safari restriction: Click Mac menu File > 'Add to Dock' (or open in Google Chrome for 1-click install)");
     } else {
-      setNotice("Click the Install icon at the right edge of your browser URL bar");
+      setNotice("App may already be installed, or click the Install icon (computer with arrow) at the right end of your Chrome address bar");
     }
 
-    setTimeout(() => setNotice(null), 6000);
+    setTimeout(() => setNotice(null), 7000);
   };
 
   // If already installed and running inside standalone window, hide
