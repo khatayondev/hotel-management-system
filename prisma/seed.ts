@@ -132,34 +132,41 @@ async function main() {
   }
 
   // 3. Seed Users with Argon2id hash
-  const ownerPasswordHash = await hash("AuraStudio2026!Secure");
+  const ownerPasswordHash = await hash("BeccaCrown2026!Admin");
   const ownerUser = await prisma.user.upsert({
-    where: { email: "owner@aurastudio.gh" },
+    where: { email: "owner@beccascrownbeauty.com" },
     update: {
       passwordHash: ownerPasswordHash,
       phone: "+233241112233",
+      name: "Akosua Addo (Owner)",
+      active: true,
+      deletedAt: null,
+      roleId: ownerRole.id,
     },
     create: {
-      email: "owner@aurastudio.gh",
+      email: "owner@beccascrownbeauty.com",
       phone: "+233241112233",
-      name: "Akosua Addo",
+      name: "Akosua Addo (Owner)",
       passwordHash: ownerPasswordHash,
       roleId: ownerRole.id,
       mustChangePassword: false,
+      active: true,
     },
   });
 
-  const staffPasswordHash = await hash("StaffReception2026!");
+  const staffPasswordHash = await hash("ReceptionCrown2026!");
   await prisma.user.upsert({
-    where: { email: "reception@aurastudio.gh" },
+    where: { email: "reception@beccascrownbeauty.com" },
     update: {
       passwordHash: staffPasswordHash,
       phone: "+233245556677",
+      name: "Abena Serwaa",
       active: true,
       deletedAt: null,
+      roleId: staffRole.id,
     },
     create: {
-      email: "reception@aurastudio.gh",
+      email: "reception@beccascrownbeauty.com",
       phone: "+233245556677",
       name: "Abena Serwaa",
       passwordHash: staffPasswordHash,
@@ -169,18 +176,19 @@ async function main() {
     },
   });
 
-  const frontDeskPasswordHash = await hash("FrontDesk2026!");
+  const frontDeskPasswordHash = await hash("FrontDesk2026!Tablet");
   await prisma.user.upsert({
-    where: { email: "frontdesk@aurastudio.gh" },
+    where: { email: "frontdesk@beccascrownbeauty.com" },
     update: {
       passwordHash: frontDeskPasswordHash,
       phone: "+233240001122",
+      name: "Front Desk Tablet",
       active: true,
       deletedAt: null,
       roleId: frontDeskRole.id,
     },
     create: {
-      email: "frontdesk@aurastudio.gh",
+      email: "frontdesk@beccascrownbeauty.com",
       phone: "+233240001122",
       name: "Front Desk Tablet",
       passwordHash: frontDeskPasswordHash,
@@ -190,17 +198,19 @@ async function main() {
     },
   });
 
-  const managerPasswordHash = await hash("ManagerStudio2026!");
+  const managerPasswordHash = await hash("ManagerCrown2026!");
   await prisma.user.upsert({
-    where: { email: "manager@aurastudio.gh" },
+    where: { email: "manager@beccascrownbeauty.com" },
     update: {
       passwordHash: managerPasswordHash,
       phone: "+233248889900",
+      name: "Kojo Mensah",
       active: true,
       deletedAt: null,
+      roleId: managerRole.id,
     },
     create: {
-      email: "manager@aurastudio.gh",
+      email: "manager@beccascrownbeauty.com",
       phone: "+233248889900",
       name: "Kojo Mensah",
       passwordHash: managerPasswordHash,
@@ -591,184 +601,7 @@ async function main() {
     },
   });
 
-  // 9. Seed Bookings & Payments
-  const baseDate = new Date();
-  const year = baseDate.getFullYear();
-  const month = baseDate.getMonth();
-  const day = baseDate.getDate();
-
-  // Booking 1: Today 09:30 AM - 11:00 AM (Confirmed, Deposit Paid)
-  const b1Start = new Date(Date.UTC(year, month, day, 9, 30));
-  const b1End = new Date(Date.UTC(year, month, day, 11, 0));
-  const booking1 = await prisma.booking.upsert({
-    where: { reference: "AURA-2026-001" },
-    update: {},
-    create: {
-      reference: "AURA-2026-001",
-      status: BookingStatus.CONFIRMED,
-      source: BookingSource.WEB,
-      startUtc: b1Start,
-      endUtc: b1End,
-      staffId: staff1.id,
-      customerId: customer1.id,
-      subtotalPesewas: 55000,
-      totalPesewas: 55000,
-      depositRequiredPesewas: 27500,
-      amountPaidPesewas: 27500,
-      manageTokenHash: "token-hash-seed-001",
-      items: {
-        create: [
-          {
-            serviceId: bridalMakeup.id,
-            pricePesewas: 55000,
-            durationMin: 90,
-          },
-        ],
-      },
-    },
-  });
-
-  // Booking 2: Today 11:30 AM - 01:00 PM (Completed)
-  const b2Start = new Date(Date.UTC(year, month, day, 11, 30));
-  const b2End = new Date(Date.UTC(year, month, day, 13, 0));
-  await prisma.booking.upsert({
-    where: { reference: "AURA-2026-002" },
-    update: {},
-    create: {
-      reference: "AURA-2026-002",
-      status: BookingStatus.COMPLETED,
-      source: BookingSource.POS,
-      startUtc: b2Start,
-      endUtc: b2End,
-      staffId: staff3.id,
-      customerId: customer2.id,
-      subtotalPesewas: 28000,
-      totalPesewas: 28000,
-      depositRequiredPesewas: 14000,
-      amountPaidPesewas: 28000,
-      manageTokenHash: "token-hash-seed-002",
-      items: {
-        create: [
-          {
-            serviceId: hybridLashes.id,
-            pricePesewas: 28000,
-            durationMin: 90,
-          },
-        ],
-      },
-    },
-  });
-
-  // Booking 3: Today 02:00 PM - 05:00 PM (Confirmed)
-  const b3Start = new Date(Date.UTC(year, month, day, 14, 0));
-  const b3End = new Date(Date.UTC(year, month, day, 17, 0));
-  await prisma.booking.upsert({
-    where: { reference: "AURA-2026-003" },
-    update: {},
-    create: {
-      reference: "AURA-2026-003",
-      status: BookingStatus.CONFIRMED,
-      source: BookingSource.WEB,
-      startUtc: b3Start,
-      endUtc: b3End,
-      staffId: staff2.id,
-      customerId: customer3.id,
-      subtotalPesewas: 35000,
-      totalPesewas: 35000,
-      depositRequiredPesewas: 17500,
-      amountPaidPesewas: 17500,
-      manageTokenHash: "token-hash-seed-003",
-      items: {
-        create: [
-          {
-            serviceId: knotlessBraids.id,
-            pricePesewas: 35000,
-            durationMin: 180,
-          },
-        ],
-      },
-    },
-  });
-
-  // Booking 4: Today 05:30 PM - 07:00 PM (Pending Payment)
-  const b4Start = new Date(Date.UTC(year, month, day, 17, 30));
-  const b4End = new Date(Date.UTC(year, month, day, 19, 0));
-  await prisma.booking.upsert({
-    where: { reference: "AURA-2026-004" },
-    update: {},
-    create: {
-      reference: "AURA-2026-004",
-      status: BookingStatus.PENDING_PAYMENT,
-      source: BookingSource.WEB,
-      startUtc: b4Start,
-      endUtc: b4End,
-      staffId: staff1.id,
-      customerId: customer4.id,
-      subtotalPesewas: 45000,
-      totalPesewas: 45000,
-      depositRequiredPesewas: 45000,
-      amountPaidPesewas: 0,
-      manageTokenHash: "token-hash-seed-004",
-      items: {
-        create: [
-          {
-            serviceId: dressRental.id,
-            pricePesewas: 45000,
-            durationMin: 60,
-          },
-        ],
-      },
-    },
-  });
-
-  // Booking 5: Tomorrow 10:00 AM - 11:30 AM (Pending Payment)
-  const b5Start = new Date(Date.UTC(year, month, day + 1, 10, 0));
-  const b5End = new Date(Date.UTC(year, month, day + 1, 11, 30));
-  await prisma.booking.upsert({
-    where: { reference: "AURA-2026-005" },
-    update: {},
-    create: {
-      reference: "AURA-2026-005",
-      status: BookingStatus.PENDING_PAYMENT,
-      source: BookingSource.WEB,
-      startUtc: b5Start,
-      endUtc: b5End,
-      staffId: staff3.id,
-      customerId: customer5.id,
-      subtotalPesewas: 28000,
-      totalPesewas: 28000,
-      depositRequiredPesewas: 14000,
-      amountPaidPesewas: 0,
-      manageTokenHash: "token-hash-seed-005",
-      items: {
-        create: [
-          {
-            serviceId: hybridLashes.id,
-            pricePesewas: 28000,
-            durationMin: 90,
-          },
-        ],
-      },
-    },
-  });
-
-  // Seed historical payments for completed/confirmed bookings
-  await prisma.payment.upsert({
-    where: { reference: "PAY-AURA-001" },
-    update: {},
-    create: {
-      bookingId: booking1.id,
-      reference: "PAY-AURA-001",
-      amountPesewas: 27500,
-      currency: "GHS",
-      status: PaymentStatus.PAID,
-      channel: "MOBILE_MONEY",
-      providerReference: "MTN-MOMO-9918231",
-      paidAt: new Date(),
-    },
-  });
-
-  console.log("✅ Seed completed successfully!");
+  console.log("✅ Seed completed successfully with clean operational catalogue!");
 }
 
 main()
