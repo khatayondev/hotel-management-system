@@ -784,10 +784,10 @@ function BookingWizardContent() {
   // CONFIRMATION VIEW
   if (bookingResult) {
     return (
-      <div className="relative min-h-[calc(100dvh-5rem)] w-full py-6 sm:py-10 flex items-center justify-center p-4 sm:p-8 bg-[#0B0A09]">
-        <div className="relative z-10 w-full max-w-lg rounded-[32px] sm:rounded-[36px] bg-white border border-zinc-200/90 p-6 sm:p-10 text-zinc-900 shadow-2xl space-y-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-8 h-8" />
+      <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-[#0B0A09] flex items-center justify-center p-3 sm:p-6">
+        <div className="relative z-10 w-full max-w-lg rounded-[28px] sm:rounded-[36px] bg-white border border-zinc-200/90 p-6 sm:p-8 text-zinc-900 shadow-2xl space-y-5 text-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
 
           <div className="space-y-1">
@@ -845,94 +845,21 @@ function BookingWizardContent() {
   }
 
   return (
-    <div className="relative min-h-[calc(100dvh-2rem)] w-full pt-20 sm:pt-24 lg:pt-24 pb-6 sm:pb-8 flex items-center justify-center p-3 sm:p-6 lg:p-8 bg-[#0B0A09]">
-      {/* Background canvas (Clean dark luxury contrast without murky overlays) */}
+    <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-[#0B0A09] flex items-center justify-center p-0 sm:p-4 md:p-6 lg:p-8 select-none">
+      {/* Background canvas */}
       <div className="fixed inset-0 z-0 bg-[#0B0A09] pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* =========================================================================
-            LEFT COLUMN: Clear Portrait on the Left Side + Text Below Her
-        ========================================================================= */}
-        <div className="hidden lg:flex lg:col-span-5 flex-col justify-center text-white pr-2 xl:pr-6">
-          <div className="flex flex-col gap-6">
-            {/* Clear Image of Her (Bigger, borderless, untagged, no transparency, no overlay) */}
-            <div className="relative w-full max-w-[540px] aspect-square rounded-[36px] overflow-hidden shadow-2xl">
-              <Image
-                src="/images/alcock-muller-B6G9C0kxVVc-unsplash.jpg"
-                alt="Becca's Crown Beauty Vault"
-                fill
-                priority
-                className="object-cover object-center"
-                sizes="(max-width: 1024px) 100vw, 540px"
-              />
-            </div>
-
-            {/* The Text Below Her */}
-            <div className="space-y-4 max-w-[500px]">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] text-white">
-                {STEP_BACKGROUNDS[step].title}
-              </h1>
-
-              <p className="text-xs sm:text-sm text-zinc-300 font-medium leading-relaxed">
-                {STEP_BACKGROUNDS[step].subtitle}
-              </p>
-
-              <div className="flex items-center gap-4 text-xs text-zinc-400 border-t border-white/10 pt-4">
-                <div className="flex items-center gap-1.5">
-                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  <span className="font-bold text-white">4.9/5 Rating</span>
-                </div>
-                <span>•</span>
-                <div className="flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                  <span>Instant Confirmation</span>
-                </div>
-                <span>•</span>
-                <div className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-blue-400" />
-                  <span>MoMo & Card</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* =========================================================================
-            RIGHT COLUMN: MINIMALISTIC LUXURY WHITE CARD
-        ========================================================================= */}
-        <div className="lg:col-span-7 w-full flex flex-col items-center justify-center">
-          {/* Mobile/Tablet Header: Her Portrait & Step Title */}
-          <div className="lg:hidden w-full max-w-xl flex items-center gap-4 p-3.5 rounded-2xl bg-zinc-900/90 border border-white/15 mb-3 text-white shadow-xl">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 shadow-md">
-              <Image
-                src="/images/alcock-muller-B6G9C0kxVVc-unsplash.jpg"
-                alt="Becca's Crown Beauty Vault"
-                fill
-                priority
-                className="object-cover object-center"
-                sizes="(max-width: 640px) 64px, 80px"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <Crown className="w-3 h-3 text-amber-400 shrink-0" />
-                <span className="text-[10px] font-bold text-amber-200 tracking-wider uppercase">Becca&apos;s Crown</span>
-              </div>
-              <h2 className="text-sm font-bold text-white truncate">{STEP_BACKGROUNDS[step].title}</h2>
-              <p className="text-[11px] text-zinc-400 truncate">{STEP_BACKGROUNDS[step].subtitle}</p>
-            </div>
-          </div>
-
-          <div className="w-full max-w-xl min-h-[500px] h-[calc(100dvh-7rem)] max-h-[640px] sm:max-h-[660px] lg:max-h-[680px] rounded-[28px] sm:rounded-[36px] bg-white border border-zinc-200/90 p-4 sm:p-5 lg:p-6 shadow-2xl text-zinc-900 flex flex-col justify-between overflow-hidden transition-all duration-300">
-            {/* Top Bar inside the Card: Studio Brand Capsule & Step Indicator */}
-            <div className="flex items-center justify-between pb-2.5 sm:pb-3.5 border-b border-zinc-200/80 shrink-0">
-              {/* Studio Capsule */}
-              <Link
-                href="/"
-                className="flex items-center gap-2 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200/80 pl-1.5 pr-3 py-1 rounded-full transition-colors"
-              >
-                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 text-zinc-950 font-black text-[10px] sm:text-[11px] flex items-center justify-center shadow-xs">
-                  BC
+      {/* The Booking Form Card - Fixed & Fitting Every Screen Perfectly */}
+      <div className="relative z-10 w-full sm:max-w-xl md:max-w-2xl h-full sm:h-[92dvh] sm:max-h-[780px] sm:min-h-[580px] rounded-none sm:rounded-[36px] bg-white sm:border border-zinc-200/90 p-4 sm:p-5 lg:p-6 shadow-2xl text-zinc-900 flex flex-col justify-between overflow-hidden transition-all duration-300">
+        {/* Top Bar inside the Card: Studio Brand Capsule & Step Indicator */}
+        <div className="flex items-center justify-between pb-2.5 sm:pb-3.5 border-b border-zinc-200/80 shrink-0">
+          {/* Studio Capsule */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200/80 pl-1.5 pr-3 py-1 rounded-full transition-colors"
+          >
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 text-zinc-950 font-black text-[10px] sm:text-[11px] flex items-center justify-center shadow-xs">
+              BC
                 </div>
                 <div>
                   <span className="text-[10px] sm:text-[11px] font-bold block leading-none text-zinc-900">
@@ -1733,17 +1660,15 @@ function BookingWizardContent() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      );
 }
 
 export default function BookingWizardPage() {
   return (
     <React.Suspense
       fallback={
-        <div className="min-h-[85vh] flex items-center justify-center p-4">
-          <div className="w-full max-w-[480px] h-[580px] rounded-[36px] bg-zinc-950/70 border border-white/10 animate-pulse" />
+        <div className="fixed inset-0 z-50 h-[100dvh] w-screen overflow-hidden bg-[#0B0A09] flex items-center justify-center p-4">
+          <div className="w-full max-w-xl h-[90dvh] max-h-[760px] rounded-[36px] bg-white border border-zinc-200 animate-pulse" />
         </div>
       }
     >
