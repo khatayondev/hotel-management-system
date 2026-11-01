@@ -166,59 +166,59 @@ export const GET = withErrorHandler(async () => {
 
   // Today Appointments Checklist
   const todayChecklist = todayBookings.map((b) => {
-    const mainItem = b.items[0];
-    const serviceName = mainItem ? mainItem.service.name : "Custom Beauty Service";
+    const mainItem = b.items?.[0];
+    const serviceName = mainItem?.service?.name ?? "Custom Beauty Service";
     return {
       id: b.id,
       reference: b.reference,
-      customerName: b.customer.name,
-      customerPhone: b.customer.phone,
+      customerName: b.customer?.name ?? "Walk-in Guest",
+      customerPhone: b.customer?.phone ?? "No phone",
       serviceName,
       timeFormatted: `${formatTime(b.startUtc)} – ${formatTime(b.endUtc)}`,
-      staffName: b.staff.name,
+      staffName: b.staff?.name ?? "Unassigned",
       status: b.status,
       completed: b.status === "COMPLETED",
-      totalPesewas: b.totalPesewas,
-      amountPaidPesewas: b.amountPaidPesewas,
+      totalPesewas: b.totalPesewas ?? 0,
+      amountPaidPesewas: b.amountPaidPesewas ?? 0,
     };
   });
 
   // Pending Payments formatted
   const pendingPayments = pendingPaymentsList.map((b) => {
-    const mainItem = b.items[0];
-    const serviceName = mainItem ? mainItem.service.name : "Beauty Service";
+    const mainItem = b.items?.[0];
+    const serviceName = mainItem?.service?.name ?? "Beauty Service";
     return {
       id: b.id,
       reference: b.reference,
-      customerName: b.customer.name,
-      customerPhone: b.customer.phone,
+      customerName: b.customer?.name ?? "Guest",
+      customerPhone: b.customer?.phone ?? "",
       serviceName,
-      amountPendingPesewas: b.totalPesewas - b.amountPaidPesewas,
-      totalPesewas: b.totalPesewas,
-      depositRequiredPesewas: b.depositRequiredPesewas,
+      amountPendingPesewas: Math.max(0, (b.totalPesewas ?? 0) - (b.amountPaidPesewas ?? 0)),
+      totalPesewas: b.totalPesewas ?? 0,
+      depositRequiredPesewas: b.depositRequiredPesewas ?? 0,
       timeFormatted: `${formatTime(b.startUtc)} – ${formatTime(b.endUtc)}`,
-      staffName: b.staff.name,
+      staffName: b.staff?.name ?? "Staff",
       status: b.status,
     };
   });
 
   // Latest Bookings formatted
   const latestBookings = latestBookingsRaw.map((b) => {
-    const mainItem = b.items[0];
-    const serviceName = mainItem ? mainItem.service.name : "Beauty Package";
+    const mainItem = b.items?.[0];
+    const serviceName = mainItem?.service?.name ?? "Beauty Package";
     const categoryName = mainItem?.service?.category?.name || "Services";
     return {
       id: b.id,
       reference: b.reference,
-      customerName: b.customer.name,
-      customerPhone: b.customer.phone,
+      customerName: b.customer?.name ?? "Guest",
+      customerPhone: b.customer?.phone ?? "",
       serviceName,
       categoryName,
-      staffName: b.staff.name,
-      startUtc: b.startUtc.toISOString(),
+      staffName: b.staff?.name ?? "Staff",
+      startUtc: b.startUtc ? b.startUtc.toISOString() : new Date().toISOString(),
       timeFormatted: `${formatTime(b.startUtc)} – ${formatTime(b.endUtc)}`,
-      totalPesewas: b.totalPesewas,
-      amountPaidPesewas: b.amountPaidPesewas,
+      totalPesewas: b.totalPesewas ?? 0,
+      amountPaidPesewas: b.amountPaidPesewas ?? 0,
       status: b.status,
       source: b.source,
     };
