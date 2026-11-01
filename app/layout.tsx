@@ -49,8 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${jakartaSans.variable} ${poppins.variable} font-sans h-full antialiased`}>
-      <body className="min-h-full w-full max-w-full overflow-x-hidden bg-swirl text-[#1E1E1E] flex flex-col">
-        {children}
+      <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -62,22 +61,18 @@ export default function RootLayout({
                 window.dispatchEvent(new CustomEvent('pwa-prompt-available', { detail: e }));
               });
 
-              // Service Worker Registration across Desktop, iOS and Android
+              // Immediate Service Worker Registration
               if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-                var initSW = function() {
-                  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
-                    console.debug('ServiceWorker notice:', err);
-                  });
-                };
-                if (document.readyState === 'complete') {
-                  initSW();
-                } else {
-                  window.addEventListener('load', initSW);
-                }
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
+                  console.debug('ServiceWorker notice:', err);
+                });
               }
             `,
           }}
         />
+      </head>
+      <body className="min-h-full w-full max-w-full overflow-x-hidden bg-swirl text-[#1E1E1E] flex flex-col">
+        {children}
       </body>
     </html>
   );
