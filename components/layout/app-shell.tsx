@@ -542,6 +542,9 @@ export function AppShell({
 
           {/* Top Bar Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Install PWA Header Shortcut */}
+            <InstallPwaButton variant="header" className="hidden md:inline-flex" />
+
             {/* Search Trigger Button */}
             <Button
               variant="circularIcon"

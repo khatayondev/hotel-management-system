@@ -6,27 +6,35 @@ import { Crown, Lock, ArrowRight, ShieldCheck, KeyRound, Zap, Eye, EyeOff, Check
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label, Input } from "@/components/ui/controls";
+import { InstallPwaButton } from "@/components/pwa/install-pwa-button";
 
 const DEMO_ACCOUNTS = [
   {
     role: "Owner / Admin",
-    name: "Akosua Addo",
-    email: "owner@aurastudio.gh",
-    password: "AuraStudio2026!Secure",
+    name: "Becca Addo",
+    email: "owner@beccascrownbeauty.com",
+    password: "BeccaCrown2026!Admin",
     badge: "Full Access",
+  },
+  {
+    role: "Front Desk (Tablet)",
+    name: "Front Desk Tablet",
+    email: "frontdesk@beccascrownbeauty.com",
+    password: "FrontDesk2026!Tablet",
+    badge: "Salon Tablet",
   },
   {
     role: "Manager",
     name: "Kojo Mensah",
-    email: "manager@aurastudio.gh",
-    password: "ManagerStudio2026!",
+    email: "manager@beccascrownbeauty.com",
+    password: "ManagerCrown2026!",
     badge: "Operations",
   },
   {
     role: "Receptionist",
     name: "Abena Serwaa",
-    email: "reception@aurastudio.gh",
-    password: "StaffReception2026!",
+    email: "reception@beccascrownbeauty.com",
+    password: "ReceptionCrown2026!",
     badge: "Front Desk",
   },
 ] as const;
@@ -228,7 +236,7 @@ function StaffLoginForm() {
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="owner@beccascrown.gh or 024 111 2233"
+                  placeholder="owner@beccascrownbeauty.com or 024 111 2233"
                   value={identifier}
                   onChange={(e) => {
                     setIdentifier(e.target.value);
@@ -371,6 +379,11 @@ function StaffLoginForm() {
             </p>
           </div>
         </Card>
+
+        {/* Salon Tablet / Desktop App Installation Button */}
+        <div className="mt-4 flex flex-col items-center">
+          <InstallPwaButton variant="login" className="w-full justify-center" />
+        </div>
       </div>
     </div>
   );

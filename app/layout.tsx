@@ -22,13 +22,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Becca's Crown Beauty Vault | Booking, Payments & POS",
+  title: "Becca's Crown Beauty Vault | Studio Dashboard & Booking",
   description: "Premier beauty, makeup, lash artistry, hair, and aesthetics in Ghana.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Becca's Crown",
+    title: "Crown Dashboard",
   },
   icons: {
     icon: [
@@ -54,12 +54,26 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Early capture of beforeinstallprompt to ensure it is never missed by late hydration
+              window.__pwaInstallPrompt = null;
+              window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                window.__pwaInstallPrompt = e;
+                window.dispatchEvent(new CustomEvent('pwa-prompt-available', { detail: e }));
+              });
+
+              // Service Worker Registration across Desktop, iOS and Android
               if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                var initSW = function() {
+                  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
                     console.debug('ServiceWorker notice:', err);
                   });
-                });
+                };
+                if (document.readyState === 'complete') {
+                  initSW();
+                } else {
+                  window.addEventListener('load', initSW);
+                }
               }
             `,
           }}

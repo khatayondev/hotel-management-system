@@ -2,17 +2,18 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Becca's Crown Beauty Vault",
-    short_name: "Becca's Crown",
-    description: "Luxury Beauty Studio Booking, POS & Studio Management Portal in Ghana",
+    name: "Becca's Crown Studio Dashboard",
+    short_name: "Crown Dashboard",
+    description: "Studio Management, Booking Board & POS for Becca's Crown Beauty Vault",
+    id: "/dashboard",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     display_override: ["standalone", "window-controls-overlay", "minimal-ui"],
-    background_color: "#09090b",
-    theme_color: "#141006",
+    background_color: "#000000",
+    theme_color: "#000000",
     orientation: "any",
-    categories: ["business", "productivity", "lifestyle"],
+    categories: ["business", "productivity"],
     icons: [
       {
         src: "/icons/icon-192.png",
@@ -51,13 +52,6 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "POS & Checkout",
-        short_name: "POS",
-        description: "Charge Mobile Money, Card & process client walk-ins",
-        url: "/pos",
-        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
-      },
-      {
         name: "Studio Schedule",
         short_name: "Schedule",
         description: "View daily appointments and specialist assignments",
@@ -65,10 +59,10 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
       {
-        name: "New Appointment",
-        short_name: "Book",
-        description: "Book signature treatment for client",
-        url: "/book",
+        name: "POS & Checkout",
+        short_name: "POS",
+        description: "Charge Mobile Money, Card & process client walk-ins",
+        url: "/pos",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
       {
@@ -76,6 +70,13 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: "Clients",
         description: "Client contact directory and history",
         url: "/customers",
+        icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
+      },
+      {
+        name: "New Appointment",
+        short_name: "Book",
+        description: "Book signature treatment for client",
+        url: "/book",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
     ],

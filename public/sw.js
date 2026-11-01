@@ -1,17 +1,26 @@
 // Becca's Crown Beauty Vault - High-Performance PWA Service Worker
-const CACHE_NAME = "beccascrown-pwa-v2";
+const CACHE_NAME = "beccascrown-pwa-v3";
 const PRECACHE_ASSETS = [
   "/manifest.webmanifest",
   "/favicon.ico",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",
+  "/icons/icon-maskable-192.png",
+  "/icons/icon-maskable-512.png",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
+      // Use allSettled so missing asset never fails service worker installation
+      return Promise.allSettled(
+        PRECACHE_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => {
+            console.debug("PWA Precache item notice:", asset, err);
+          })
+        )
+      );
     })
   );
   self.skipWaiting();
