@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Download, Check, Loader2 } from "lucide-react";
+import { Download, Check, Sparkles, Monitor, Smartphone, Tablet, RefreshCw, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog-and-drawer";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -20,52 +22,78 @@ export function InstallPwaButton({
 }) {
   const [deferredPrompt, setDeferredPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = React.useState(false);
-  const [isInstalling, setIsInstalling] = React.useState(false);
   const [installedSuccess, setInstalledSuccess] = React.useState(false);
-  const [notice, setNotice] = React.useState<string | null>(null);
+  const [showHelperModal, setShowHelperModal] = React.useState(false);
+  const [browserType, setBrowserType] = React.useState<"chrome" | "safari-mac" | "safari-ios" | "edge" | "other">("other");
+  const [isRefreshingWorker, setIsRefreshingWorker] = React.useState(false);
 
   React.useEffect(() => {
-    // 1. Check if already running as installed standalone app
-    const isStandaloneMode =
+    // 1. Detect if running inside standalone installed window
+    const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
 
-    setIsStandalone(isStandaloneMode);
+    setIsStandalone(standalone);
 
-    // 2. Check early global capture variable
-    const earlyPrompt = (window as unknown as { __pwaInstallPrompt?: BeforeInstallPromptEvent }).__pwaInstallPrompt;
-    if (earlyPrompt) {
-      setDeferredPrompt(earlyPrompt);
+    // 2. Check if installed via getInstalledRelatedApps (Chrome 80+)
+    if ("getInstalledRelatedApps" in navigator) {
+      (navigator as unknown as { getInstalledRelatedApps: () => Promise<unknown[]> })
+        .getInstalledRelatedApps()
+        .then((apps) => {
+          if (apps && apps.length > 0) {
+            setIsStandalone(true);
+          }
+        })
+        .catch(() => {});
     }
 
-    // 3. Listen for browser install prompt & custom early capture event
-    const handlePromptEvent = (e: Event) => {
+    // 3. Detect browser & device platform
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isEdge = /edg/.test(ua);
+    const isChrome = /chrome|chromium/.test(ua) && !isEdge;
+    const isSafariMac = /safari/.test(ua) && !isChrome && !isEdge && !isIos;
+
+    if (isIos) setBrowserType("safari-ios");
+    else if (isSafariMac) setBrowserType("safari-mac");
+    else if (isEdge) setBrowserType("edge");
+    else if (isChrome) setBrowserType("chrome");
+    else setBrowserType("other");
+
+    // 4. Capture early install prompt from window global
+    const early = (window as unknown as { __pwaInstallPrompt?: BeforeInstallPromptEvent | null }).__pwaInstallPrompt;
+    if (early) {
+      setDeferredPrompt(early);
+    }
+
+    // 5. Listen for events
+    const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
-    const handleCustomPromptEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<BeforeInstallPromptEvent>;
-      if (customEvent.detail) {
-        setDeferredPrompt(customEvent.detail);
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent<BeforeInstallPromptEvent>).detail;
+      if (detail) {
+        setDeferredPrompt(detail);
       }
     };
 
-    window.addEventListener("beforeinstallprompt", handlePromptEvent);
-    window.addEventListener("pwa-prompt-available", handleCustomPromptEvent);
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("pwa-prompt-available", onCustom);
 
     window.addEventListener("appinstalled", () => {
       setDeferredPrompt(null);
       (window as unknown as { __pwaInstallPrompt?: null }).__pwaInstallPrompt = null;
       setIsStandalone(true);
       setInstalledSuccess(true);
-      setIsInstalling(false);
+      setShowHelperModal(false);
       setTimeout(() => setInstalledSuccess(false), 8000);
     });
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handlePromptEvent);
-      window.removeEventListener("pwa-prompt-available", handleCustomPromptEvent);
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("pwa-prompt-available", onCustom);
     };
   }, []);
 
@@ -73,16 +101,11 @@ export function InstallPwaButton({
     e.preventDefault();
     e.stopPropagation();
 
-    if (isInstalling || installedSuccess) return;
-
-    setNotice(null);
-
-    // 1. Check current state or window global (Must call synchronously within user gesture!)
+    // Check prompt in state or window global
     const prompt =
       deferredPrompt ||
       (window as unknown as { __pwaInstallPrompt?: BeforeInstallPromptEvent | null }).__pwaInstallPrompt;
 
-    // 2. If prompt is available, trigger native browser install immediately
     if (prompt) {
       try {
         prompt.prompt().catch((err) => {
@@ -94,28 +117,34 @@ export function InstallPwaButton({
             setInstalledSuccess(true);
             setDeferredPrompt(null);
             (window as unknown as { __pwaInstallPrompt?: null }).__pwaInstallPrompt = null;
+            setShowHelperModal(false);
           }
         });
+        return;
       } catch (err) {
-        console.error("Install prompt invocation failed:", err);
+        console.error("Error invoking prompt:", err);
       }
-      return;
     }
 
-    // 3. If browser doesn't expose programmatic install (e.g. Safari on Mac/iOS, or app already installed)
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isSafari = /safari/.test(ua) && !/chrome|chromium|edg/.test(ua);
-    const isIos = /iphone|ipad|ipod/.test(ua);
+    // If native prompt is not dispatched yet, open the install guide
+    setShowHelperModal(true);
+  };
 
-    if (isIos) {
-      setNotice("Apple Safari restriction: Tap the Share button (box with arrow) > 'Add to Home Screen'");
-    } else if (isSafari) {
-      setNotice("Apple Safari restriction: Click Mac menu File > 'Add to Dock' (or open in Google Chrome for 1-click install)");
-    } else {
-      setNotice("App may already be installed, or click the Install icon (computer with arrow) at the right end of your Chrome address bar");
+  const handleRefreshServiceWorker = async () => {
+    setIsRefreshingWorker(true);
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.update();
+        }
+      }
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch {
+      window.location.reload();
     }
-
-    setTimeout(() => setNotice(null), 7000);
   };
 
   // If already installed and running inside standalone window, hide
@@ -126,137 +155,292 @@ export function InstallPwaButton({
   // Login page variant
   if (variant === "login") {
     return (
-      <div className="w-full flex flex-col items-center">
-        <button
-          type="button"
-          onClick={handleInstallClick}
-          disabled={isInstalling}
-          className={cn(
-            "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer",
-            "bg-zinc-900 text-white hover:bg-black border border-white/10 hover:scale-[1.02] active:scale-[0.98]",
-            isInstalling && "opacity-80 cursor-wait",
-            className
-          )}
-          title="Automatically install Becca's Crown Dashboard as a dedicated tablet or desktop app"
-        >
-          {installedSuccess ? (
-            <>
-              <Check className="w-4 h-4 text-emerald-400" />
-              <span>Dashboard App Installed!</span>
-            </>
-          ) : isInstalling ? (
-            <>
-              <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-              <span>Opening Installer...</span>
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 text-amber-400" />
-              <span>Install Tablet / Desktop App</span>
-              <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/15 text-zinc-200">
-                PWA
-              </span>
-            </>
-          )}
-        </button>
+      <>
+        <div className="w-full flex flex-col items-center">
+          <button
+            type="button"
+            onClick={handleInstallClick}
+            className={cn(
+              "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all shadow-sm cursor-pointer",
+              "bg-zinc-900 text-white hover:bg-black border border-white/10 hover:scale-[1.02] active:scale-[0.98]",
+              className
+            )}
+            title="Install Becca's Crown Dashboard as a dedicated tablet or desktop app"
+          >
+            {installedSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Dashboard App Installed!</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 text-amber-400" />
+                <span>Install Tablet / Desktop App</span>
+                <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-white/15 text-zinc-200">
+                  PWA
+                </span>
+              </>
+            )}
+          </button>
+        </div>
 
-        {notice && (
-          <p className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-xl mt-2 text-center animate-in fade-in">
-            {notice}
-          </p>
-        )}
-      </div>
+        <InstallHelperModal
+          open={showHelperModal}
+          onClose={() => setShowHelperModal(false)}
+          browserType={browserType}
+          onRefresh={handleRefreshServiceWorker}
+          isRefreshing={isRefreshingWorker}
+        />
+      </>
     );
   }
 
   // Header variant
   if (variant === "header") {
     return (
-      <div className="relative inline-flex items-center">
-        <button
-          type="button"
-          onClick={handleInstallClick}
-          disabled={isInstalling}
-          className={cn(
-            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#1E1E1E] text-white hover:bg-black transition-all shadow-xs border border-white/10 cursor-pointer",
-            isInstalling && "opacity-80 cursor-wait",
-            className
-          )}
-          title="Install Crown Dashboard on tablet or computer"
-        >
-          {installedSuccess ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Installed</span>
-            </>
-          ) : isInstalling ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              <span>Installing...</span>
-            </>
-          ) : (
-            <>
-              <Download className="w-3.5 h-3.5 text-amber-400" />
-              <span>Install App</span>
-            </>
-          )}
-        </button>
+      <>
+        <div className="relative inline-flex items-center">
+          <button
+            type="button"
+            onClick={handleInstallClick}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#1E1E1E] text-white hover:bg-black transition-all shadow-xs border border-white/10 cursor-pointer",
+              className
+            )}
+            title="Install Crown Dashboard on tablet or computer"
+          >
+            {installedSuccess ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Installed</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-3.5 h-3.5 text-amber-400" />
+                <span>Install App</span>
+              </>
+            )}
+          </button>
+        </div>
 
-        {notice && (
-          <div className="absolute top-full right-0 mt-1.5 w-64 p-2 rounded-xl bg-black text-white text-[11px] leading-tight shadow-xl border border-white/10 z-50 animate-in fade-in">
-            {notice}
-          </div>
-        )}
-      </div>
+        <InstallHelperModal
+          open={showHelperModal}
+          onClose={() => setShowHelperModal(false)}
+          browserType={browserType}
+          onRefresh={handleRefreshServiceWorker}
+          isRefreshing={isRefreshingWorker}
+        />
+      </>
     );
   }
 
   // Sidebar variant (Default)
   return (
-    <div className="w-full">
-      <button
-        type="button"
-        onClick={handleInstallClick}
-        disabled={isInstalling}
-        title="Install Becca's Crown Dashboard (PWA)"
-        className={cn(
-          "transition-all text-white bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 shadow-xs cursor-pointer flex items-center justify-center",
-          collapsed
-            ? "w-10 h-10 mx-auto rounded-full"
-            : "w-full gap-3 px-3.5 py-2.5 rounded-full text-xs font-semibold",
-          isInstalling && "opacity-80 cursor-wait",
-          className
-        )}
-      >
-        {installedSuccess ? (
-          <Check className="w-4 h-4 shrink-0 text-emerald-400" />
-        ) : isInstalling ? (
-          <Loader2 className="w-4 h-4 shrink-0 text-amber-400 animate-spin" />
-        ) : (
-          <Download className="w-4 h-4 shrink-0 text-amber-400" />
-        )}
+    <>
+      <div className="w-full">
+        <button
+          type="button"
+          onClick={handleInstallClick}
+          title="Install Becca's Crown Dashboard (PWA)"
+          className={cn(
+            "transition-all text-white bg-zinc-900/90 hover:bg-zinc-800 border border-white/10 shadow-xs cursor-pointer flex items-center justify-center",
+            collapsed
+              ? "w-10 h-10 mx-auto rounded-full"
+              : "w-full gap-3 px-3.5 py-2.5 rounded-full text-xs font-semibold",
+            className
+          )}
+        >
+          {installedSuccess ? (
+            <Check className="w-4 h-4 shrink-0 text-emerald-400" />
+          ) : (
+            <Download className="w-4 h-4 shrink-0 text-amber-400" />
+          )}
 
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-left">
-              {installedSuccess
-                ? "Dashboard Installed"
-                : isInstalling
-                ? "Opening Installer..."
-                : "Install Dashboard App"}
-            </span>
-            <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-md bg-white/10 text-zinc-300">
-              PWA
-            </span>
-          </>
-        )}
-      </button>
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">
+                {installedSuccess ? "Dashboard Installed" : "Install Dashboard App"}
+              </span>
+              <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-md bg-white/10 text-zinc-300">
+                PWA
+              </span>
+            </>
+          )}
+        </button>
+      </div>
 
-      {notice && !collapsed && (
-        <p className="text-[10px] text-zinc-400 px-2 mt-1.5 leading-snug animate-in fade-in">
-          {notice}
-        </p>
-      )}
-    </div>
+      <InstallHelperModal
+        open={showHelperModal}
+        onClose={() => setShowHelperModal(false)}
+        browserType={browserType}
+        onRefresh={handleRefreshServiceWorker}
+        isRefreshing={isRefreshingWorker}
+      />
+    </>
+  );
+}
+
+function InstallHelperModal({
+  open,
+  onClose,
+  browserType,
+  onRefresh,
+  isRefreshing,
+}: {
+  open: boolean;
+  onClose: () => void;
+  browserType: "chrome" | "safari-mac" | "safari-ios" | "edge" | "other";
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}) {
+  return (
+    <Dialog isOpen={open} onClose={onClose} title="Install Studio Dashboard">
+      <div className="space-y-4 py-2 text-zinc-900">
+        {/* Banner */}
+        <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-black text-white border border-white/10 shadow-md">
+          <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-400/40 flex items-center justify-center shrink-0">
+            <span className="text-sm font-black text-amber-400">BC</span>
+          </div>
+          <div>
+            <div className="text-xs font-bold text-white flex items-center gap-1.5">
+              <span>Becca&apos;s Crown Studio Dashboard</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            </div>
+            <div className="text-[11px] text-zinc-400 mt-0.5">
+              Fast standalone app for iPad, Reception Tablets &amp; Laptops
+            </div>
+          </div>
+        </div>
+
+        {/* Browser Specific Instructions */}
+        <div className="space-y-3 text-xs">
+          {browserType === "chrome" ? (
+            /* Chrome Browser */
+            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2.5">
+              <div className="flex items-center gap-2 font-black text-zinc-950 pb-1 border-b border-zinc-200">
+                <Monitor className="w-4 h-4 text-amber-500" />
+                <span>How to Install in Google Chrome:</span>
+              </div>
+              <div className="space-y-2 text-zinc-700 leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>
+                    Click the <strong>three vertical dots (⋮)</strong> at the very top-right of your Chrome window.
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <span>
+                    Hover over <strong>&quot;Save and share&quot;</strong> (or &quot;Cast, save, and share&quot;).
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    3
+                  </span>
+                  <span>
+                    Click <strong>&quot;Install Becca&apos;s Crown Studio Dashboard...&quot;</strong> and tap <strong>Install</strong>.
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : browserType === "edge" ? (
+            /* Microsoft Edge */
+            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2.5">
+              <div className="flex items-center gap-2 font-black text-zinc-950 pb-1 border-b border-zinc-200">
+                <Monitor className="w-4 h-4 text-blue-500" />
+                <span>How to Install in Microsoft Edge:</span>
+              </div>
+              <div className="space-y-2 text-zinc-700 leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>Click the <strong>three horizontal dots (…)</strong> at top-right.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <span>Select <strong>&quot;Apps&quot;</strong> &rarr; <strong>&quot;Install this site as an app&quot;</strong>.</span>
+                </div>
+              </div>
+            </div>
+          ) : browserType === "safari-mac" ? (
+            /* Safari on Mac */
+            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2.5">
+              <div className="flex items-center gap-2 font-black text-zinc-950 pb-1 border-b border-zinc-200">
+                <Monitor className="w-4 h-4 text-zinc-700" />
+                <span>How to Install in Mac Safari:</span>
+              </div>
+              <div className="space-y-2 text-zinc-700 leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>In your Mac top menu bar, click <strong>File</strong>.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <span>
+                    Select <strong>&quot;Add to Dock...&quot;</strong> and click <strong>Add</strong>. The app icon will appear right in your Mac Dock!
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : browserType === "safari-ios" ? (
+            /* iPad or iPhone */
+            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2.5">
+              <div className="flex items-center gap-2 font-black text-zinc-950 pb-1 border-b border-zinc-200">
+                <Tablet className="w-4 h-4 text-zinc-700" />
+                <span>How to Install on iPad &amp; Tablet:</span>
+              </div>
+              <div className="space-y-2 text-zinc-700 leading-relaxed">
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    1
+                  </span>
+                  <span>Tap Safari&apos;s <strong>Share button</strong> (box with upward arrow).</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-zinc-950 text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                    2
+                  </span>
+                  <span>Scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong> &rarr; <strong>Add</strong>.</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Other Browsers */
+            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 text-zinc-700 text-xs">
+              Open the browser menu and select <strong>&quot;Install App&quot;</strong> or <strong>&quot;Add to Home Screen&quot;</strong>.
+            </div>
+          )}
+        </div>
+
+        {/* Footer with Refresh/Sync action */}
+        <div className="pt-2 flex items-center justify-between border-t border-zinc-200">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="text-[11px] font-semibold text-zinc-600 hover:text-zinc-950 flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className={cn("w-3 h-3", isRefreshing && "animate-spin")} />
+            <span>Sync PWA Cache</span>
+          </button>
+
+          <Button variant="blackPill" size="sm" onClick={onClose} className="text-xs font-bold">
+            Got It
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   );
 }

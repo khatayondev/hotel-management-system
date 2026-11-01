@@ -4,16 +4,16 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Becca's Crown Studio Dashboard",
     short_name: "Crown Dashboard",
-    description: "Studio Management, Booking Board & POS for Becca's Crown Beauty Vault",
+    description: "Official Studio Management, Booking Schedule & POS Dashboard for Becca's Crown Beauty Vault",
     id: "/dashboard",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
-    display_override: ["standalone", "window-controls-overlay", "minimal-ui"],
+    display_override: ["window-controls-overlay", "standalone", "minimal-ui"],
     background_color: "#000000",
     theme_color: "#000000",
     orientation: "any",
-    categories: ["business", "productivity"],
+    categories: ["business", "productivity", "utilities"],
     icons: [
       {
         src: "/icons/icon-192.png",
@@ -46,7 +46,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
       {
         src: "/favicon.ico",
-        sizes: "any",
+        sizes: "48x48",
         type: "image/x-icon",
       },
     ],
@@ -61,21 +61,21 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "POS & Checkout",
         short_name: "POS",
-        description: "Charge Mobile Money, Card & process client walk-ins",
+        description: "Process walk-in payments and client checkout",
         url: "/pos",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
       {
         name: "Client Directory",
         short_name: "Clients",
-        description: "Client contact directory and history",
+        description: "Search client contact cards and history",
         url: "/customers",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },
       {
         name: "New Appointment",
         short_name: "Book",
-        description: "Book signature treatment for client",
+        description: "Reserve treatment for client",
         url: "/book",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }],
       },

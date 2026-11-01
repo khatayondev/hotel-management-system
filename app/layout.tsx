@@ -61,9 +61,11 @@ export default function RootLayout({
                 window.dispatchEvent(new CustomEvent('pwa-prompt-available', { detail: e }));
               });
 
-              // Immediate Service Worker Registration
+              // Immediate Service Worker Registration with active update
               if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-                navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function(err) {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+                  reg.update();
+                }).catch(function(err) {
                   console.debug('ServiceWorker notice:', err);
                 });
               }

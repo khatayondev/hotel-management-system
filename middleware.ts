@@ -163,7 +163,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - images/ (public asset files)
+     * - icons/ (PWA icon files)
+     * - sw.js, manifest.webmanifest, offline.html (PWA offline files)
      */
-    "/((?!_next/static|_next/image|favicon.ico|images/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|images/|icons/|sw.js|manifest.webmanifest|offline.html).*)",
   ],
 };
