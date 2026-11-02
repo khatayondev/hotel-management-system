@@ -19,6 +19,8 @@ import { BookingCalendarView } from "@/components/bookings/calendar-view";
 import { BookingListView } from "@/components/bookings/list-view";
 import { BookingDrawer } from "@/components/bookings/booking-drawer";
 import { BookingRecord, BookingStaff, BookingFilters } from "@/components/bookings/types";
+import { useSmartPolling, triggerGlobalDataSync } from "@/hooks/use-smart-polling";
+import { LiveSyncIndicator } from "@/components/ui/live-sync-indicator";
 
 function BookingsContent() {
   const searchParams = useSearchParams();
@@ -175,66 +177,68 @@ function BookingsContent() {
     };
   }, []);
 
-  // 2. Fetch Bookings based on filters
-  React.useEffect(() => {
-    let ignore = false;
-    async function load() {
-      try {
-        const params = new URLSearchParams();
+  // 2. Fetch Bookings based on current filters
+  const loadBookings = React.useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
 
-        if (filters.viewMode === "calendar") {
-          const dateToUse = filters.selectedDate || new Date().toISOString().split("T")[0];
-          if (filters.calendarSubView === "day" || filters.calendarSubView === "staff") {
-            params.set("startDate", `${dateToUse}T00:00:00.000Z`);
-            params.set("endDate", `${dateToUse}T23:59:59.999Z`);
-          } else if (filters.calendarSubView === "week") {
-            const base = new Date(dateToUse);
-            const day = base.getUTCDay();
-            const dist = (day + 6) % 7;
-            const mon = new Date(base);
-            mon.setUTCDate(base.getUTCDate() - dist);
-            const sun = new Date(mon);
-            sun.setUTCDate(mon.getUTCDate() + 6);
-            params.set("startDate", `${mon.toISOString().split("T")[0]}T00:00:00.000Z`);
-            params.set("endDate", `${sun.toISOString().split("T")[0]}T23:59:59.999Z`);
-          }
-          params.set("limit", "100");
-        } else {
-          // List View: paginated query across bookings
-          params.set("page", String(filters.page));
-          params.set("limit", String(filters.limit));
+      if (filters.viewMode === "calendar") {
+        const dateToUse = filters.selectedDate || new Date().toISOString().split("T")[0];
+        if (filters.calendarSubView === "day" || filters.calendarSubView === "staff") {
+          params.set("startDate", `${dateToUse}T00:00:00.000Z`);
+          params.set("endDate", `${dateToUse}T23:59:59.999Z`);
+        } else if (filters.calendarSubView === "week") {
+          const base = new Date(dateToUse);
+          const day = base.getUTCDay();
+          const dist = (day + 6) % 7;
+          const mon = new Date(base);
+          mon.setUTCDate(base.getUTCDate() - dist);
+          const sun = new Date(mon);
+          sun.setUTCDate(mon.getUTCDate() + 6);
+          params.set("startDate", `${mon.toISOString().split("T")[0]}T00:00:00.000Z`);
+          params.set("endDate", `${sun.toISOString().split("T")[0]}T23:59:59.999Z`);
         }
+        params.set("limit", "100");
+      } else {
+        // List View: paginated query across bookings
+        params.set("page", String(filters.page));
+        params.set("limit", String(filters.limit));
+      }
 
-        if (filters.status !== "ALL") params.set("status", filters.status);
-        if (filters.staffId !== "ALL") params.set("staffId", filters.staffId);
-        if (filters.serviceId !== "ALL") params.set("serviceId", filters.serviceId);
-        if (filters.source !== "ALL") params.set("source", filters.source);
-        if (filters.paymentStatus !== "ALL") params.set("paymentStatus", filters.paymentStatus);
-        if (filters.search.trim()) params.set("search", filters.search.trim());
+      if (filters.status !== "ALL") params.set("status", filters.status);
+      if (filters.staffId !== "ALL") params.set("staffId", filters.staffId);
+      if (filters.serviceId !== "ALL") params.set("serviceId", filters.serviceId);
+      if (filters.source !== "ALL") params.set("source", filters.source);
+      if (filters.paymentStatus !== "ALL") params.set("paymentStatus", filters.paymentStatus);
+      if (filters.search.trim()) params.set("search", filters.search.trim());
 
-        const res = await fetch(`/api/admin/bookings?${params.toString()}`);
-        if (!ignore && res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            setBookings(json.data.bookings || []);
-            setTotal(json.data.total || 0);
-            setTotalPages(json.data.totalPages || 1);
-            if (json.data.stats) setStats(json.data.stats);
-          }
-        }
-      } catch {
-        // quiet error
-      } finally {
-        if (!ignore) {
-          setLoading(false);
+      const res = await fetch(`/api/admin/bookings?${params.toString()}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setBookings(json.data.bookings || []);
+          setTotal(json.data.total || 0);
+          setTotalPages(json.data.totalPages || 1);
+          if (json.data.stats) setStats(json.data.stats);
         }
       }
+    } catch {
+      // quiet error
+    } finally {
+      setLoading(false);
     }
-    load();
-    return () => {
-      ignore = true;
-    };
-  }, [filters, refreshTrigger]);
+  }, [filters]);
+
+  // Load when filters or manual refreshTrigger changes
+  React.useEffect(() => {
+    loadBookings();
+  }, [loadBookings, refreshTrigger]);
+
+  // Approach A: Smart SWR Polling (30s interval + focus revalidation + visibility pause)
+  const { isRefreshing, lastRefreshedAt, refresh: manualRefresh } = useSmartPolling(loadBookings, {
+    intervalMs: 30000,
+    syncTopic: "bookings",
+  });
 
   // 3. Real-Time Server-Sent Events (SSE) Listener
   React.useEffect(() => {
@@ -311,6 +315,7 @@ function BookingsContent() {
 
       const json = await res.json();
       if (json.success) {
+        triggerGlobalDataSync("all");
         return { success: true };
       }
 
@@ -350,16 +355,11 @@ function BookingsContent() {
               <h1 className="text-2xl font-black text-[#1E1E1E] tracking-tight">
                 Appointments & Bookings
               </h1>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                  sseConnected
-                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                    : "bg-zinc-100 text-zinc-600 border border-zinc-300"
-                }`}
-              >
-                <Radio className={`w-3 h-3 ${sseConnected ? "animate-pulse text-emerald-600" : ""}`} />
-                <span>{sseConnected ? "Live Sync" : "Syncing"}</span>
-              </span>
+              <LiveSyncIndicator
+                isRefreshing={isRefreshing}
+                lastRefreshedAt={lastRefreshedAt}
+                onRefresh={manualRefresh}
+              />
             </div>
             <p className="text-xs text-[#71717A] mt-0.5">
               Manage salon appointments, calendar schedules, client check-ins and studio operations
@@ -726,7 +726,10 @@ function BookingsContent() {
           <BookingDrawer
             bookingId={selectedBookingId}
             onClose={() => setSelectedBookingId(null)}
-            onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
+            onRefresh={() => {
+              setRefreshTrigger((prev) => prev + 1);
+              triggerGlobalDataSync("all");
+            }}
             staffList={staffList}
           />
         )}

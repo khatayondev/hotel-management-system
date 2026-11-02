@@ -32,6 +32,8 @@ import { formatPesewas } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { OwnerOnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { FrontDeskTabletBoard } from "@/components/dashboard/front-desk-tablet-board";
+import { useSmartPolling, triggerGlobalDataSync } from "@/hooks/use-smart-polling";
+import { LiveSyncIndicator } from "@/components/ui/live-sync-indicator";
 
 interface DashboardData {
   user: {
@@ -147,33 +149,16 @@ export default function DashboardOverviewPage() {
     }
   }, []);
 
+  // Initial load on mount
   React.useEffect(() => {
-    let ignore = false;
-    async function init() {
-      try {
-        const res = await fetch("/api/dashboard/overview");
-        if (ignore) return;
-        if (res.ok) {
-          const json = await res.json();
-          setData(json.data);
-        } else {
-          setNotification({ type: "error", message: "Failed to load dashboard metrics." });
-        }
-      } catch {
-        if (!ignore) {
-          setNotification({ type: "error", message: "Network error loading dashboard telemetry." });
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-    init();
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    loadDashboard();
+  }, [loadDashboard]);
+
+  // Smart SWR Polling (30s interval + focus revalidation + visibility pause)
+  const { isRefreshing, lastRefreshedAt, refresh } = useSmartPolling(loadDashboard, {
+    intervalMs: 30000,
+    syncTopic: "overview",
+  });
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
@@ -205,6 +190,7 @@ export default function DashboardOverviewPage() {
         loadDashboard();
       } else {
         showNotification("success", json.data.message);
+        triggerGlobalDataSync("all");
       }
     } catch {
       showNotification("error", "Network error updating appointment status.");
@@ -314,6 +300,25 @@ export default function DashboardOverviewPage() {
 
         {/* Owner Onboarding Checklist */}
         {data?.user?.role === "OWNER_ADMIN" && <OwnerOnboardingChecklist />}
+
+        {/* Top Operations Header with Live Sync Status */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-zinc-950 tracking-tight">
+              Studio Operations
+            </h1>
+            <p className="text-xs text-zinc-500">
+              Live schedule, revenue metrics, and walk-in client activities
+            </p>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <LiveSyncIndicator
+              isRefreshing={isRefreshing}
+              lastRefreshedAt={lastRefreshedAt}
+              onRefresh={refresh}
+            />
+          </div>
+        </div>
 
         {/* BOOKINGS STATCARDS (Moved from bookings page to maximize appointment calendar space) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

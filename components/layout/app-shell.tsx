@@ -35,6 +35,7 @@ import { Input, Label } from "@/components/ui/controls";
 import { StatusChip } from "@/components/ui/status-chip";
 import { InstallPwaButton } from "@/components/pwa/install-pwa-button";
 import { useAuth } from "@/components/auth/auth-context";
+import { useSmartPolling } from "@/hooks/use-smart-polling";
 import { ROLES, UserRole, PERMISSION_KEYS } from "@/lib/rbac";
 
 interface NavItem {
@@ -176,26 +177,29 @@ export function AppShell({
   // Notifications state
   const [notifications, setNotifications] = React.useState<NotificationItem[]>([]);
 
-  React.useEffect(() => {
-    let active = true;
-    const load = () => {
-      fetch("/api/dashboard/notifications")
-        .then((res) => (res.ok ? res.json() : null))
-        .then((json) => {
-          if (active && json?.data?.notifications) {
-            setNotifications(json.data.notifications);
-          }
-        })
-        .catch(() => {});
-    };
-
-    load();
-    const interval = setInterval(load, 30000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
+  const loadNotifications = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/notifications");
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data?.notifications) {
+          setNotifications(json.data.notifications);
+        }
+      }
+    } catch {
+      // quiet
+    }
   }, []);
+
+  React.useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
+  // Smart SWR Polling: 30s interval, pauses when hidden, revalidates on focus
+  useSmartPolling(loadNotifications, {
+    intervalMs: 30000,
+    syncTopic: "notifications",
+  });
 
   const handleMarkAsRead = async (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, unread: false } : n)));
