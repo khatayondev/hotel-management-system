@@ -50,6 +50,15 @@ interface DashboardData {
       todayCompletedCount: number;
     };
   };
+  bookingStats?: {
+    total: number;
+    confirmed: number;
+    checkedIn: number;
+    completed: number;
+    cancelled: number;
+    pendingPayment: number;
+    noShow: number;
+  };
   weeklyProgress: {
     day: string;
     current: number;
@@ -305,6 +314,58 @@ export default function DashboardOverviewPage() {
 
         {/* Owner Onboarding Checklist */}
         {data?.user?.role === "OWNER_ADMIN" && <OwnerOnboardingChecklist />}
+
+        {/* BOOKINGS STATCARDS (Moved from bookings page to maximize appointment calendar space) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Link href="/bookings" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-black/30 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block group-hover:text-zinc-700">Total Bookings</span>
+              <div className="text-xl font-black text-[#1E1E1E]">
+                {loading ? "—" : (data?.bookingStats?.total ?? 0)}
+              </div>
+            </div>
+          </Link>
+          <Link href="/bookings?status=CONFIRMED" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-emerald-400 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Confirmed</span>
+              <div className="text-xl font-black text-emerald-900">
+                {loading ? "—" : (data?.bookingStats?.confirmed ?? 0)}
+              </div>
+            </div>
+          </Link>
+          <Link href="/bookings?status=CHECKED_IN" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-zinc-400 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 block">Checked In</span>
+              <div className="text-xl font-black text-zinc-800">
+                {loading ? "—" : (data?.bookingStats?.checkedIn ?? 0)}
+              </div>
+            </div>
+          </Link>
+          <Link href="/bookings?status=COMPLETED" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-zinc-400 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 block">Completed</span>
+              <div className="text-xl font-black text-[#1E1E1E]">
+                {loading ? "—" : (data?.bookingStats?.completed ?? 0)}
+              </div>
+            </div>
+          </Link>
+          <Link href="/bookings?status=PENDING_PAYMENT" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-amber-400 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">Pending Pay</span>
+              <div className="text-xl font-black text-amber-900">
+                {loading ? "—" : (data?.bookingStats?.pendingPayment ?? 0)}
+              </div>
+            </div>
+          </Link>
+          <Link href="/bookings?status=CANCELLED" className="group">
+            <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-rose-400 hover:shadow-sm transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 block">Cancelled</span>
+              <div className="text-xl font-black text-rose-800">
+                {loading ? "—" : (data?.bookingStats?.cancelled ?? 0)}
+              </div>
+            </div>
+          </Link>
+        </div>
 
         {/* FRONT DESK TABLET BOARD (NO STATCARDS, FUNCTIONAL OPERATIONAL COMMAND CENTER) */}
         {data?.user?.role === "FRONT_DESK" || data?.user?.role === "STAFF_RECEPTIONIST" ? (

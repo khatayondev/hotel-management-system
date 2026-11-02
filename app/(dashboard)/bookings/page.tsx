@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Calendar as CalendarIcon,
   List as ListIcon,
@@ -20,6 +21,9 @@ import { BookingDrawer } from "@/components/bookings/booking-drawer";
 import { BookingRecord, BookingStaff, BookingFilters } from "@/components/bookings/types";
 
 function BookingsContent() {
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status");
+
   const [staffList, setStaffList] = React.useState<BookingStaff[]>([]);
   const [servicesList, setServicesList] = React.useState<Array<{ id: string; name: string }>>([]);
 
@@ -27,7 +31,7 @@ function BookingsContent() {
     viewMode: "calendar",
     calendarSubView: "day",
     selectedDate: "",
-    status: "ALL",
+    status: (urlStatus && ["CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "PENDING_PAYMENT", "NO_SHOW"].includes(urlStatus)) ? (urlStatus as any) : "ALL",
     staffId: "ALL",
     serviceId: "ALL",
     source: "ALL",
@@ -38,15 +42,16 @@ function BookingsContent() {
   });
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      const today = new Date().toISOString().split("T")[0];
-      setFilters((prev) => ({
-        ...prev,
-        selectedDate: prev.selectedDate || today,
-      }));
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    const today = new Date().toISOString().split("T")[0];
+    const validStatuses = ["CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "PENDING_PAYMENT", "NO_SHOW"];
+    const targetStatus = urlStatus && validStatuses.includes(urlStatus) ? urlStatus : undefined;
+
+    setFilters((prev) => ({
+      ...prev,
+      selectedDate: prev.selectedDate || today,
+      ...(targetStatus ? { status: targetStatus as any } : {}),
+    }));
+  }, [urlStatus]);
 
   const [loading, setLoading] = React.useState(true);
   const [bookings, setBookings] = React.useState<BookingRecord[]>([]);
@@ -390,34 +395,6 @@ function BookingsContent() {
                 <span>List View</span>
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* STATS TILES (Quick glance summary) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Total</span>
-            <div className="text-xl font-black text-[#1E1E1E]">{stats.total}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Confirmed</span>
-            <div className="text-xl font-black text-emerald-900">{stats.confirmed}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 block">Checked In</span>
-            <div className="text-xl font-black text-zinc-800">{stats.checkedIn}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700 block">Completed</span>
-            <div className="text-xl font-black text-[#1E1E1E]">{stats.completed}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block">Pending Pay</span>
-            <div className="text-xl font-black text-amber-900">{stats.pendingPayment}</div>
-          </div>
-          <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 block">Cancelled</span>
-            <div className="text-xl font-black text-rose-800">{stats.cancelled}</div>
           </div>
         </div>
 

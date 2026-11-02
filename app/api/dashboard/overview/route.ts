@@ -41,6 +41,7 @@ export const GET = withErrorHandler(async () => {
     monthPayments,
     lastMonthPayments,
     latestBookingsRaw,
+    statsGroup,
   ] = await Promise.all([
     // Total completed bookings
     prisma.booking.count({
@@ -126,7 +127,38 @@ export const GET = withErrorHandler(async () => {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+
+    // Booking status breakdown for stat cards
+    prisma.booking.groupBy({
+      by: ["status"],
+      where: {
+        ...staffFilter,
+        deletedAt: null,
+      },
+      _count: { id: true },
+    }),
   ]);
+
+  const bookingStats = {
+    total: 0,
+    confirmed: 0,
+    checkedIn: 0,
+    completed: 0,
+    cancelled: 0,
+    pendingPayment: 0,
+    noShow: 0,
+  };
+
+  for (const group of statsGroup) {
+    const count = group._count?.id || 0;
+    bookingStats.total += count;
+    if (group.status === "CONFIRMED") bookingStats.confirmed = count;
+    if (group.status === "CHECKED_IN") bookingStats.checkedIn = count;
+    if (group.status === "COMPLETED") bookingStats.completed = count;
+    if (group.status === "CANCELLED") bookingStats.cancelled = count;
+    if (group.status === "PENDING_PAYMENT") bookingStats.pendingPayment = count;
+    if (group.status === "NO_SHOW") bookingStats.noShow = count;
+  }
 
   // Overall Info Calculations
   const pendingPaymentsCount = pendingPaymentsList.length;
@@ -278,6 +310,7 @@ export const GET = withErrorHandler(async () => {
         todayCompletedCount,
       },
     },
+    bookingStats,
     weeklyProgress,
     monthProgress: {
       currentRevenuePesewas: currentMonthPesewas,
