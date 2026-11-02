@@ -139,30 +139,65 @@ export const GET = withErrorHandler(async () => {
   const todayPendingCount = todayBookings.filter((b) => b.status === "PENDING_PAYMENT").length;
   const todayCompletedCount = todayBookings.filter((b) => b.status === "COMPLETED").length;
 
-  // Weekly Progress Data: M T W T F S S axis
+  // Weekly Progress Data: calculate REAL revenue per day for this week and previous week
   const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
-  // getDay: 0 is Sun, 1 is Mon, ..., 6 is Sat -> map to 0=Mon ... 6=Sun
-  const todayDayOfWeek = (now.getUTCDay() + 6) % 7;
+  const todayDayOfWeek = (now.getUTCDay() + 6) % 7; // 0 = Mon, ..., 6 = Sun
 
-  // Realistic weekly curve
-  const currentWeekValues = [320, 480, 620, 540, 780, 920, 450];
-  const previousWeekValues = [280, 390, 500, 490, 670, 850, 410];
+  const startOfCurrentWeek = new Date(Date.UTC(year, month, date - todayDayOfWeek, 0, 0, 0));
+  const startOfPreviousWeek = new Date(startOfCurrentWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const [thisWeekPayments, prevWeekPayments] = await Promise.all([
+    prisma.payment.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: startOfCurrentWeek },
+        ...(hasViewAll ? {} : session.staffId ? { booking: { staffId: session.staffId } } : {}),
+      },
+      select: { amountPesewas: true, paidAt: true },
+    }),
+    prisma.payment.findMany({
+      where: {
+        status: "PAID",
+        paidAt: { gte: startOfPreviousWeek, lt: startOfCurrentWeek },
+        ...(hasViewAll ? {} : session.staffId ? { booking: { staffId: session.staffId } } : {}),
+      },
+      select: { amountPesewas: true, paidAt: true },
+    }),
+  ]);
+
+  const currentWeekSums = [0, 0, 0, 0, 0, 0, 0];
+  for (const p of thisWeekPayments) {
+    if (p.paidAt) {
+      const d = (p.paidAt.getUTCDay() + 6) % 7;
+      currentWeekSums[d] += Math.round(p.amountPesewas / 100);
+    }
+  }
+
+  const previousWeekSums = [0, 0, 0, 0, 0, 0, 0];
+  for (const p of prevWeekPayments) {
+    if (p.paidAt) {
+      const d = (p.paidAt.getUTCDay() + 6) % 7;
+      previousWeekSums[d] += Math.round(p.amountPesewas / 100);
+    }
+  }
 
   const weeklyProgress = dayLabels.map((day, idx) => ({
     day,
-    current: currentWeekValues[idx],
-    previous: previousWeekValues[idx],
+    current: currentWeekSums[idx],
+    previous: previousWeekSums[idx],
     isToday: idx === todayDayOfWeek,
   }));
 
-  // Month Progress Calculations
-  const currentMonthPesewas = monthPayments._sum.amountPesewas || 3450000; // GH₵ 34,500 fallback if clean DB
-  const lastMonthPesewas = lastMonthPayments._sum.amountPesewas || 3000000; // GH₵ 30,000
+  // Month Progress Calculations - Real live calculations with zero fallbacks
+  const currentMonthPesewas = monthPayments._sum.amountPesewas ?? 0;
+  const lastMonthPesewas = lastMonthPayments._sum.amountPesewas ?? 0;
   const targetMonthlyPesewas = 4500000; // GH₵ 45,000.00 target
-  const percentOfTarget = Math.min(100, Math.round((currentMonthPesewas / targetMonthlyPesewas) * 100));
-  const percentChangeVsLastMonth = Number(
-    (((currentMonthPesewas - lastMonthPesewas) / (lastMonthPesewas || 1)) * 100).toFixed(1)
-  );
+  const percentOfTarget = targetMonthlyPesewas > 0
+    ? Math.min(100, Math.round((currentMonthPesewas / targetMonthlyPesewas) * 100))
+    : 0;
+  const percentChangeVsLastMonth = lastMonthPesewas > 0
+    ? Number((((currentMonthPesewas - lastMonthPesewas) / lastMonthPesewas) * 100).toFixed(1))
+    : 0;
 
   // Today Appointments Checklist
   const todayChecklist = todayBookings.map((b) => {

@@ -550,57 +550,7 @@ async function main() {
     },
   });
 
-  // 8. Seed Customers
-  const customer1 = await prisma.customer.upsert({
-    where: { phone: "+233245551234" },
-    update: {},
-    create: {
-      name: "Ama Pokuaa",
-      phone: "+233245551234",
-      email: "ama.pokuaa@gmail.com",
-    },
-  });
-
-  const customer2 = await prisma.customer.upsert({
-    where: { phone: "+233509987766" },
-    update: {},
-    create: {
-      name: "Serwaa Boateng",
-      phone: "+233509987766",
-      email: "serwaa.b@yahoo.com",
-    },
-  });
-
-  const customer3 = await prisma.customer.upsert({
-    where: { phone: "+233204456677" },
-    update: {},
-    create: {
-      name: "Abena Osei",
-      phone: "+233204456677",
-      email: "abena.osei@outlook.com",
-    },
-  });
-
-  const customer4 = await prisma.customer.upsert({
-    where: { phone: "+233271122334" },
-    update: {},
-    create: {
-      name: "Efua Mensah",
-      phone: "+233271122334",
-      email: "efua.m@gmail.com",
-    },
-  });
-
-  const customer5 = await prisma.customer.upsert({
-    where: { phone: "+233543344556" },
-    update: {},
-    create: {
-      name: "Nana Yaa Asare",
-      phone: "+233543344556",
-      email: "nanayaa@gmail.com",
-    },
-  });
-
+  // 8. Studio operational catalogue ready (No dummy customers)
   console.log("✅ Seed completed successfully with clean operational catalogue!");
 }
 
