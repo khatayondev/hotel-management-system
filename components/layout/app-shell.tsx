@@ -81,6 +81,7 @@ export function AppShell({
   const router = useRouter();
   const [mobileDrawerOpen, setMobileDrawerOpen] = React.useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [focusMode, setFocusMode] = React.useState(false);
   const [createDropdownOpen, setCreateDropdownOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [searchModalOpen, setSearchModalOpen] = React.useState(false);
@@ -89,6 +90,12 @@ export function AppShell({
 
   React.useEffect(() => {
     try {
+      const savedFocus = localStorage.getItem("beccas_focus_mode");
+      if (savedFocus === "true") {
+        setFocusMode(true);
+        setSidebarCollapsed(true);
+        return;
+      }
       const saved = localStorage.getItem("beccas_sidebar_collapsed");
       if (saved !== null) {
         setSidebarCollapsed(saved === "true");
@@ -102,6 +109,24 @@ export function AppShell({
     setSidebarCollapsed((prev) => {
       const next = !prev;
       try {
+        localStorage.setItem("beccas_sidebar_collapsed", String(next));
+      } catch {
+        // quiet
+      }
+      return next;
+    });
+  };
+
+  const toggleFocusMode = () => {
+    setFocusMode((prev) => {
+      const next = !prev;
+      if (next) {
+        setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
+      }
+      try {
+        localStorage.setItem("beccas_focus_mode", String(next));
         localStorage.setItem("beccas_sidebar_collapsed", String(next));
       } catch {
         // quiet
@@ -353,11 +378,13 @@ export function AppShell({
         {/* Brand & Collapse Toggle */}
         {!isCollapsed ? (
           <div className="flex items-center justify-between mb-4">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-white/5 transition-colors group min-w-0"
+            <button
+              type="button"
+              onClick={toggleFocusMode}
+              className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-white/10 transition-all group min-w-0 text-left cursor-pointer"
+              title="Click logo to collapse sidebar & hide topbar for maximum calendar room"
             >
-              <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 group-hover:border-amber-400/50 transition-colors">
+              <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 group-hover:border-amber-400/50 group-hover:scale-105 transition-all">
                 <Crown className="w-4 h-4 text-amber-300" />
               </div>
               <div className="min-w-0">
@@ -368,7 +395,7 @@ export function AppShell({
                   Beauty Vault • Accra
                 </p>
               </div>
-            </Link>
+            </button>
 
             <button
               type="button"
@@ -382,13 +409,20 @@ export function AppShell({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2.5 mb-4">
-            <Link
-              href="/dashboard"
-              className="w-10 h-10 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md hover:border-amber-400/50 transition-colors"
-              title="Becca's Crown Beauty Vault"
+            <button
+              type="button"
+              onClick={toggleFocusMode}
+              className={cn(
+                "w-10 h-10 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md hover:border-amber-400/70 hover:scale-105 transition-all cursor-pointer relative",
+                focusMode && "border-amber-400/80 shadow-amber-400/20"
+              )}
+              title={focusMode ? "Click logo to restore topbar and sidebar" : "Click logo to collapse sidebar & hide topbar"}
             >
               <Crown className="w-4 h-4 text-amber-300" />
-            </Link>
+              {focusMode && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-black animate-pulse" />
+              )}
+            </button>
             <button
               type="button"
               onClick={toggleSidebarCollapse}
@@ -500,8 +534,15 @@ export function AppShell({
           sidebarCollapsed ? "lg:pl-20" : "lg:pl-64"
         )}
       >
-        {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-black/5 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        {/* Top Header (Smoothly collapses out of view in Focus Mode to maximize calendar / table space) */}
+        <header
+          className={cn(
+            "sticky top-0 z-30 bg-white/85 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 transition-all duration-300 ease-in-out",
+            focusMode
+              ? "-translate-y-full opacity-0 pointer-events-none max-h-0 py-0 border-b-0 overflow-hidden"
+              : "translate-y-0 opacity-100 max-h-28 py-3.5 border-b border-black/5"
+          )}
+        >
           <div className="flex items-center gap-3">
             {/* Mobile menu trigger */}
             <Button
@@ -745,6 +786,22 @@ export function AppShell({
             </div>
           </div>
         </header>
+
+        {/* Floating Focus Mode Banner / Restore Trigger */}
+        {focusMode && (
+          <div className="fixed top-2.5 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-top-2">
+            <button
+              type="button"
+              onClick={toggleFocusMode}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-zinc-950/90 hover:bg-black text-white backdrop-blur-md shadow-lg border border-white/20 transition-all hover:scale-105 cursor-pointer"
+              title="Click to restore top header and sidebar"
+            >
+              <Crown className="w-3 h-3 text-amber-300" />
+              <span>Full View Active</span>
+              <span className="text-[10px] text-zinc-400 font-normal">• Click logo or here to restore</span>
+            </button>
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto min-w-0">
