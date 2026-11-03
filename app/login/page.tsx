@@ -2,42 +2,10 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Crown, Lock, ArrowRight, ShieldCheck, KeyRound, Zap, Eye, EyeOff, Check } from "lucide-react";
+import { Crown, Lock, ArrowRight, ShieldCheck, KeyRound, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label, Input } from "@/components/ui/controls";
-import { InstallPwaButton } from "@/components/pwa/install-pwa-button";
-
-const DEMO_ACCOUNTS = [
-  {
-    role: "Owner / Admin",
-    name: "Becca Addo",
-    email: "owner@beccascrownbeauty.com",
-    password: "BeccaCrown2026!Admin",
-    badge: "Full Access",
-  },
-  {
-    role: "Front Desk (Tablet)",
-    name: "Front Desk Tablet",
-    email: "frontdesk@beccascrownbeauty.com",
-    password: "FrontDesk2026!Tablet",
-    badge: "Salon Tablet",
-  },
-  {
-    role: "Manager",
-    name: "Kojo Mensah",
-    email: "manager@beccascrownbeauty.com",
-    password: "ManagerCrown2026!",
-    badge: "Operations",
-  },
-  {
-    role: "Receptionist",
-    name: "Abena Serwaa",
-    email: "reception@beccascrownbeauty.com",
-    password: "ReceptionCrown2026!",
-    badge: "Front Desk",
-  },
-] as const;
 
 function StaffLoginForm() {
   const router = useRouter();
@@ -47,7 +15,6 @@ function StaffLoginForm() {
   const [identifier, setIdentifier] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
-  const [selectedDemoRole, setSelectedDemoRole] = React.useState<string | null>(null);
   const [totpCode, setTotpCode] = React.useState("");
   const [requiresTotp, setRequiresTotp] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -58,13 +25,6 @@ function StaffLoginForm() {
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [passwordChangeLoading, setPasswordChangeLoading] = React.useState(false);
-
-  function fillDemoCredentials(acc: typeof DEMO_ACCOUNTS[number]) {
-    setIdentifier(acc.email);
-    setPassword(acc.password);
-    setSelectedDemoRole(acc.role);
-    setError(null);
-  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -161,68 +121,8 @@ function StaffLoginForm() {
           </p>
         </div>
 
-        {/* Login or First-Login Password Change Card */}
+        {/* Clean, Simple Login Card */}
         <Card variant="glass" className="p-6 sm:p-8 shadow-xl">
-          {/* Quick Auto-Fill Demo Accounts */}
-          {!mustChangePassword && !requiresTotp && (
-            <div className="mb-6 p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-200/70 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#1E1E1E]">
-                  <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  <span>Quick Demo Login (Click to Auto-fill)</span>
-                </div>
-                <span className="text-[10px] uppercase font-mono tracking-wider px-1.5 py-0.5 rounded bg-neutral-200/70 text-neutral-600">
-                  Dev/Test
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2">
-                {DEMO_ACCOUNTS.map((acc) => {
-                  const isSelected = selectedDemoRole === acc.role;
-                  return (
-                    <button
-                      key={acc.role}
-                      type="button"
-                      onClick={() => fillDemoCredentials(acc)}
-                      className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group ${
-                        isSelected
-                          ? "bg-white border-[#1E1E1E] shadow-sm ring-1 ring-[#1E1E1E]"
-                          : "bg-white/80 border-neutral-200/80 hover:bg-white hover:border-neutral-300"
-                      }`}
-                    >
-                      <div className="flex flex-col min-w-0 pr-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-[#1E1E1E] truncate">
-                            {acc.role}
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-neutral-100 text-[#71717A] font-medium">
-                            {acc.badge}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-[#71717A] font-mono truncate mt-0.5">
-                          {acc.email}
-                        </span>
-                      </div>
-
-                      <div className="shrink-0 flex items-center">
-                        {isSelected ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                            <Check className="w-3 h-3 stroke-[3]" />
-                            <span>Filled</span>
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-medium text-neutral-500 group-hover:text-[#1E1E1E] bg-neutral-100/80 group-hover:bg-neutral-100 px-2 py-1 rounded-lg transition-colors">
-                            Fill
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {error && (
             <div className="p-3.5 mb-5 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] text-xs font-semibold text-[#991B1B]">
               {error}
@@ -236,15 +136,12 @@ function StaffLoginForm() {
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="owner@beccascrownbeauty.com or 024 111 2233"
                   value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    setSelectedDemoRole(null);
-                  }}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                   disabled={loading || requiresTotp}
                   autoComplete="username"
+                  className="mt-1"
                 />
               </div>
 
@@ -254,7 +151,7 @@ function StaffLoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="text-[11px] text-[#71717A] hover:text-[#1E1E1E] flex items-center gap-1 transition-colors"
+                    className="text-[11px] text-[#71717A] hover:text-[#1E1E1E] flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     {showPassword ? (
                       <>
@@ -272,15 +169,12 @@ function StaffLoginForm() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••••••"
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setSelectedDemoRole(null);
-                  }}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading || requiresTotp}
                   autoComplete="current-password"
+                  className="mt-1"
                 />
               </div>
 
@@ -294,15 +188,15 @@ function StaffLoginForm() {
                     id="totpCode"
                     type="text"
                     inputMode="numeric"
-                    placeholder="6-digit authenticator code"
                     value={totpCode}
                     onChange={(e) => setTotpCode(e.target.value)}
                     required
                     maxLength={6}
                     autoFocus
+                    className="mt-1 text-center tracking-widest text-base font-mono font-bold"
                   />
-                  <p className="text-[11px] text-[#71717A] mt-1">
-                    Enter the code from your Google Authenticator or 1Password app.
+                  <p className="text-[11px] text-[#71717A] mt-1 text-center">
+                    Enter the 6-digit code from your authenticator app
                   </p>
                 </div>
               )}
@@ -311,7 +205,7 @@ function StaffLoginForm() {
                 type="submit"
                 variant="blackPill"
                 size="md"
-                className="w-full mt-2 gap-2 shadow-sm"
+                className="w-full mt-2 gap-2 shadow-sm cursor-pointer"
                 disabled={loading}
               >
                 {loading ? (
@@ -344,7 +238,7 @@ function StaffLoginForm() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  placeholder="••••••••••••"
+                  className="mt-1"
                 />
               </div>
 
@@ -356,7 +250,7 @@ function StaffLoginForm() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  placeholder="••••••••••••"
+                  className="mt-1"
                 />
               </div>
 
@@ -364,7 +258,7 @@ function StaffLoginForm() {
                 type="submit"
                 variant="blackPill"
                 size="md"
-                className="w-full mt-2"
+                className="w-full mt-2 cursor-pointer"
                 disabled={passwordChangeLoading}
               >
                 {passwordChangeLoading ? "Updating..." : "Update Password & Continue"}
@@ -372,18 +266,10 @@ function StaffLoginForm() {
             </form>
           )}
 
-          <div className="pt-6 mt-6 border-t border-black/5 text-center text-xs text-[#71717A]">
-            <p>Customers do not need accounts to book.</p>
-            <p className="mt-1">
-              Authorized salon personnel only. All access attempts are audit logged.
-            </p>
+          <div className="pt-5 mt-5 border-t border-black/5 text-center text-xs text-[#71717A]">
+            <p>Authorized salon personnel only.</p>
           </div>
         </Card>
-
-        {/* Salon Tablet / Desktop App Installation Button */}
-        <div className="mt-4 flex flex-col items-center">
-          <InstallPwaButton variant="login" className="w-full justify-center" />
-        </div>
       </div>
     </div>
   );
@@ -402,4 +288,3 @@ export default function StaffLoginPage() {
     </React.Suspense>
   );
 }
-

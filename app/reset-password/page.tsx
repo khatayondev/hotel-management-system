@@ -148,7 +148,6 @@ function ResetPasswordForm() {
                       minLength={8}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="••••••••••••"
                       className="pr-10"
                     />
                     <button
@@ -171,7 +170,6 @@ function ResetPasswordForm() {
                       minLength={8}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="••••••••••••"
                       className="pr-10"
                     />
                     <button
