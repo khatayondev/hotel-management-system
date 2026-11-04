@@ -1,5 +1,5 @@
-// Becca's Crown Beauty Vault - Enterprise PWA Service Worker v4
-const CACHE_NAME = "beccascrown-dashboard-v4";
+// Becca's Crown Beauty Vault - Enterprise PWA Service Worker v5
+const CACHE_NAME = "beccascrown-dashboard-v5";
 const OFFLINE_URL = "/offline.html";
 
 const PRECACHE_ASSETS = [

@@ -347,6 +347,9 @@ function InstallHelperModal({
                   </span>
                 </div>
               </div>
+              <div className="mt-2 pt-2 border-t border-zinc-200/80 text-[11px] text-zinc-500">
+                💡 <strong>Already installed?</strong> You will see <em>&quot;Open in Becca&apos;s Crown...&quot;</em> instead, or find it in your Mac Applications / Dock.
+              </div>
             </div>
           ) : browserType === "edge" ? (
             /* Microsoft Edge */
