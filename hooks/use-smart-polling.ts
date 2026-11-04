@@ -234,3 +234,4 @@ export function useSmartPolling(
     refresh: executeRefresh,
   };
 }
+

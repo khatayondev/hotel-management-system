@@ -27,6 +27,8 @@ import { BookingStatusBadge } from "./status-badge";
 import { RequestPaymentModal } from "@/components/payment-requests/request-payment-modal";
 import { PaymentRequestsList } from "@/components/payment-requests/payment-requests-list";
 import { RefundModal } from "./refund-modal";
+import { RecordCashModal } from "./record-cash-modal";
+import { Banknote } from "lucide-react";
 
 interface BookingDrawerProps {
   bookingId: string | null;
@@ -61,6 +63,7 @@ export function BookingDrawer({
   const [newNote, setNewNote] = React.useState("");
   const [addingNote, setAddingNote] = React.useState(false);
   const [requestPaymentModalOpen, setRequestPaymentModalOpen] = React.useState(false);
+  const [recordCashModalOpen, setRecordCashModalOpen] = React.useState(false);
   const [refundModalOpen, setRefundModalOpen] = React.useState(false);
 
   // Refetch helper
@@ -611,15 +614,24 @@ export function BookingDrawer({
                     <span className="text-sm">{formatPesewas(booking.balanceDuePesewas)}</span>
                   </div>
                   {booking.balanceDuePesewas > 0 && booking.status !== "CANCELLED" && (
-                    <div className="pt-2">
+                    <div className="pt-2 grid grid-cols-2 gap-2">
                       <Button
                         size="sm"
                         variant="blackPill"
+                        onClick={() => setRecordCashModalOpen(true)}
+                        className="text-xs font-bold gap-1.5 cursor-pointer bg-emerald-700 hover:bg-emerald-800 text-white"
+                      >
+                        <Banknote className="w-3.5 h-3.5" />
+                        <span>Receive Cash</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outlinePill"
                         onClick={() => setRequestPaymentModalOpen(true)}
-                        className="w-full text-xs font-bold gap-1.5 cursor-pointer bg-zinc-900 text-white hover:bg-black"
+                        className="text-xs font-bold gap-1.5 cursor-pointer"
                       >
                         <CreditCard className="w-3.5 h-3.5" />
-                        <span>Request Payment ({formatPesewas(booking.balanceDuePesewas)})</span>
+                        <span>Request MoMo</span>
                       </Button>
                     </div>
                   )}
@@ -916,6 +928,22 @@ export function BookingDrawer({
           reference={booking.reference}
           customerName={booking.customer.name}
           amountPaidPesewas={booking.amountPaidPesewas}
+          onSuccess={async () => {
+            await refetch();
+            onRefresh();
+          }}
+        />
+      )}
+
+      {/* RECORD CASH / IN-PERSON PAYMENT MODAL */}
+      {booking && (
+        <RecordCashModal
+          isOpen={recordCashModalOpen}
+          onClose={() => setRecordCashModalOpen(false)}
+          bookingId={booking.id}
+          bookingReference={booking.reference}
+          customerName={booking.customer.name}
+          balanceDuePesewas={booking.balanceDuePesewas}
           onSuccess={async () => {
             await refetch();
             onRefresh();

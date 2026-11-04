@@ -1,4 +1,4 @@
-export type PaymentMethod = "CASH" | "MOBILE_MONEY" | "CARD";
+export type PaymentMethod = "CASH" | "MOBILE_MONEY" | "CARD" | "BANK_TRANSFER";
 
 export interface PosPaymentSplitInput {
   method: PaymentMethod;

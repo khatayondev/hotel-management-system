@@ -299,11 +299,16 @@ export async function processPosCheckout(
     const manageToken = crypto.randomBytes(24).toString("hex");
     const manageTokenHash = crypto.createHash("sha256").update(manageToken).digest("hex");
 
+    const isFutureAppointment = !input.isWalkIn && startUtc.getTime() > Date.now() + 15 * 60 * 1000;
+    const initialStatus = isFutureAppointment
+      ? (amountPaidPesewas > 0 ? "CONFIRMED" : "PENDING_PAYMENT")
+      : (amountPaidPesewas >= totalPesewas ? "COMPLETED" : "CHECKED_IN");
+
     const booking = await tx.booking.create({
       data: {
         reference: bookingRef,
         source: input.isWalkIn !== false ? "WALK_IN" : "POS",
-        status: amountPaidPesewas >= totalPesewas ? "COMPLETED" : "CHECKED_IN",
+        status: initialStatus,
         startUtc,
         endUtc,
         staffId: assignedStaffId!,
@@ -311,7 +316,7 @@ export async function processPosCheckout(
         subtotalPesewas,
         discountPesewas,
         totalPesewas,
-        depositRequiredPesewas: totalPesewas,
+        depositRequiredPesewas: isFutureAppointment ? Math.round(totalPesewas * 0.5) : totalPesewas,
         amountPaidPesewas,
         notes: input.notes?.trim() || null,
         manageTokenHash,

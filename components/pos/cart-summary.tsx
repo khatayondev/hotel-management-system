@@ -121,7 +121,7 @@ export function CartSummary({
           </div>
           */}
 
-          {/* Walk-in vs Scheduled */}
+          {/* Walk-in vs Scheduled Slot */}
           <div>
             <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
               Timing
@@ -130,10 +130,10 @@ export function CartSummary({
               <button
                 type="button"
                 onClick={() => onToggleWalkIn(true)}
-                className={`flex-1 py-1 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${
+                className={`flex-1 py-1 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   isWalkIn
-                    ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-xs"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-xs font-bold"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-black"
                 }`}
               >
                 <Zap className="w-3 h-3 text-amber-500" />
@@ -141,30 +141,122 @@ export function CartSummary({
               </button>
               <button
                 type="button"
-                onClick={() => onToggleWalkIn(false)}
-                className={`flex-1 py-1 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 ${
+                onClick={() => {
+                  onToggleWalkIn(false);
+                  if (!scheduledTime) {
+                    // Default to today at next rounded hour
+                    const now = new Date();
+                    now.setMinutes(0, 0, 0);
+                    now.setHours(now.getHours() + 1);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
+                    onChangeScheduledTime(dateStr);
+                  }
+                }}
+                className={`flex-1 py-1 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   !isWalkIn
-                    ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-xs"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "bg-white text-zinc-900 dark:bg-zinc-800 dark:text-white shadow-xs font-bold"
+                    : "text-zinc-600 dark:text-zinc-400 hover:text-black"
                 }`}
               >
                 <Calendar className="w-3 h-3 text-blue-500" />
-                <span>Schedule</span>
+                <span>Book Slot</span>
               </button>
             </div>
           </div>
 
           {!isWalkIn && (
-            <div className="sm:col-span-2 pt-1">
-              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
-                Scheduled Start Date & Time
-              </Label>
+            <div className="pt-2 space-y-2 border-t border-zinc-200/60 dark:border-zinc-700/60 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                  Select Appointment Date
+                </Label>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const today = new Date().toISOString().split("T")[0];
+                      const currentTime = scheduledTime ? scheduledTime.split("T")[1] || "10:00" : "10:00";
+                      onChangeScheduledTime(`${today}T${currentTime}`);
+                    }}
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-zinc-200/70 hover:bg-zinc-300 text-zinc-700 cursor-pointer"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tmrw = new Date();
+                      tmrw.setDate(tmrw.getDate() + 1);
+                      const tmrwStr = tmrw.toISOString().split("T")[0];
+                      const currentTime = scheduledTime ? scheduledTime.split("T")[1] || "10:00" : "10:00";
+                      onChangeScheduledTime(`${tmrwStr}T${currentTime}`);
+                    }}
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-zinc-200/70 hover:bg-zinc-300 text-zinc-700 cursor-pointer"
+                  >
+                    Tomorrow
+                  </button>
+                </div>
+              </div>
+
               <Input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => onChangeScheduledTime(e.target.value)}
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={scheduledTime ? scheduledTime.split("T")[0] : ""}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  const currentTime = scheduledTime ? scheduledTime.split("T")[1] || "10:00" : "10:00";
+                  onChangeScheduledTime(`${newDate}T${currentTime}`);
+                }}
                 className="h-8 text-xs rounded-xl"
               />
+
+              <div className="space-y-1">
+                <Label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block">
+                  Available Salon Slot
+                </Label>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 pt-0.5">
+                  {["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"].map((slot) => {
+                    const currentDate = scheduledTime ? scheduledTime.split("T")[0] : new Date().toISOString().split("T")[0];
+                    const slotDateTime = `${currentDate}T${slot}`;
+                    const isSelected = scheduledTime?.startsWith(`${currentDate}T${slot}`);
+                    const formatHour = (s: string) => {
+                      const h = parseInt(s.split(":")[0], 10);
+                      const ampm = h >= 12 ? "PM" : "AM";
+                      const hr = h % 12 || 12;
+                      return `${hr}:00 ${ampm}`;
+                    };
+
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => onChangeScheduledTime(slotDateTime)}
+                        className={`py-1 text-[10px] font-bold rounded-lg transition-all border text-center cursor-pointer ${
+                          isSelected
+                            ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                            : "bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300"
+                        }`}
+                      >
+                        {formatHour(slot)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Slot Duration & End Time Preview */}
+              {scheduledTime && (
+                <div className="p-2 rounded-xl bg-blue-50/80 border border-blue-200/60 text-[11px] text-blue-900 flex items-center justify-between font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>Slot: {new Date(scheduledTime).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
+                  </div>
+                  <span className="text-blue-700 text-[10px]">
+                    {totalDurationMin} mins (ends ~{new Date(new Date(scheduledTime).getTime() + totalDurationMin * 60000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })})
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
