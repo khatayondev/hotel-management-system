@@ -317,9 +317,12 @@ function InstallHelperModal({
           {browserType === "chrome" ? (
             /* Chrome Browser */
             <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-2.5">
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 font-medium text-[11px] leading-relaxed">
+                🚀 <strong>App Already Installed?</strong> Look at the right end of your Chrome address bar: if you see the pill <strong>&quot;Open in app&quot;</strong>, Crown Dashboard is already installed on your computer! Click it to launch the standalone window immediately.
+              </div>
               <div className="flex items-center gap-2 font-black text-zinc-950 pb-1 border-b border-zinc-200">
                 <Monitor className="w-4 h-4 text-amber-500" />
-                <span>How to Install in Google Chrome:</span>
+                <span>To Reinstall or Setup Fresh:</span>
               </div>
               <div className="space-y-2 text-zinc-700 leading-relaxed">
                 <div className="flex items-start gap-2">
@@ -327,7 +330,7 @@ function InstallHelperModal({
                     1
                   </span>
                   <span>
-                    Click the <strong>three vertical dots (⋮)</strong> at the very top-right of your Chrome window.
+                    Click the <strong>three vertical dots (⋮)</strong> at the top-right of your Chrome window.
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
@@ -335,7 +338,7 @@ function InstallHelperModal({
                     2
                   </span>
                   <span>
-                    Hover over <strong>&quot;Save and share&quot;</strong> (or &quot;Cast, save, and share&quot;).
+                    Hover over <strong>&quot;Save and share&quot;</strong> (or view main menu).
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
@@ -343,12 +346,12 @@ function InstallHelperModal({
                     3
                   </span>
                   <span>
-                    Click <strong>&quot;Install Becca&apos;s Crown Studio Dashboard...&quot;</strong> and tap <strong>Install</strong>.
+                    Click <strong>&quot;Install Becca&apos;s Crown Studio Dashboard...&quot;</strong> (or <em>&quot;Open in Becca&apos;s Crown...&quot;</em> if already on your Mac).
                   </span>
                 </div>
               </div>
               <div className="mt-2 pt-2 border-t border-zinc-200/80 text-[11px] text-zinc-500">
-                💡 <strong>Already installed?</strong> You will see <em>&quot;Open in Becca&apos;s Crown...&quot;</em> instead, or find it in your Mac Applications / Dock.
+                💡 You can also launch it anytime from your <strong>Mac Applications</strong> folder, <strong>Mac Dock</strong>, or Chrome Apps (<code>chrome://apps</code>).
               </div>
             </div>
           ) : browserType === "edge" ? (

@@ -10,8 +10,8 @@ import { logger } from "./logger";
 export const SESSION_COOKIE_NAME = "aura_session";
 
 // Session lifecycles
-export const SESSION_ABSOLUTE_EXPIRY_HOURS = 24 * 7; // 7 days max lifetime
-export const SESSION_IDLE_TIMEOUT_HOURS = 2; // 2 hours idle timeout
+export const SESSION_ABSOLUTE_EXPIRY_HOURS = 24 * 14; // 14 days max lifetime
+export const SESSION_IDLE_TIMEOUT_HOURS = 24; // 24 hours idle timeout for salon operational tablets & laptops
 export const MAX_LOGIN_ATTEMPTS = 5;
 export const LOCKOUT_DURATION_MINUTES = 15;
 

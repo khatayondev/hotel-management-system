@@ -139,6 +139,10 @@ export default function DashboardOverviewPage() {
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
+      } else if (res.status === 401) {
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?redirect=/dashboard";
+        }
       } else {
         setNotification({ type: "error", message: "Failed to load dashboard metrics." });
       }

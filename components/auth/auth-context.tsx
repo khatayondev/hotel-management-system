@@ -61,6 +61,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setUser(null);
+        if (res.status === 401 && typeof window !== "undefined") {
+          const path = window.location.pathname;
+          const protectedPrefixes = [
+            "/dashboard",
+            "/bookings",
+            "/appointments",
+            "/pos",
+            "/customers",
+            "/staff",
+            "/settings",
+            "/reports",
+            "/audit",
+          ];
+          const isProtected = protectedPrefixes.some(
+            (prefix) => path === prefix || path.startsWith(`${prefix}/`)
+          );
+          if (isProtected) {
+            window.location.href = `/login?redirect=${encodeURIComponent(path)}`;
+          }
+        }
       }
     } catch (err) {
       setError("Failed to fetch session");
