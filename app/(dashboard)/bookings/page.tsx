@@ -233,9 +233,9 @@ function BookingsContent() {
     loadBookings();
   }, [loadBookings, refreshTrigger]);
 
-  // Smart SWR Polling (15s interval + focus revalidation + instant cross-tab sync)
+  // Smart SWR Polling (1 min interval + focus revalidation + instant cross-tab sync)
   const { isRefreshing, lastRefreshedAt, refresh: manualRefresh } = useSmartPolling(loadBookings, {
-    intervalMs: 15000,
+    intervalMs: 60000,
     syncTopic: "bookings",
   });
 

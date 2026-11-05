@@ -102,7 +102,7 @@ export function LiveSyncIndicator({
       type="button"
       onClick={onRefresh}
       disabled={isRefreshing}
-      title={`Auto-refresh active (15s interval + instant on booking). Last synced: ${relativeTime}. Click to refresh immediately.`}
+      title={`Auto-refresh active (1 min interval + instant on booking). Last synced: ${relativeTime}. Click to refresh immediately.`}
       className={cn(
         "inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all cursor-pointer select-none",
         isRefreshing

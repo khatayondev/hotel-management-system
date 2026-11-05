@@ -195,9 +195,9 @@ export function AppShell({
     loadNotifications();
   }, [loadNotifications]);
 
-  // Smart SWR Polling: 30s interval, pauses when hidden, revalidates on focus
+  // Smart SWR Polling: 1 min interval, pauses when hidden, revalidates on focus
   useSmartPolling(loadNotifications, {
-    intervalMs: 30000,
+    intervalMs: 60000,
     syncTopic: "notifications",
   });
 

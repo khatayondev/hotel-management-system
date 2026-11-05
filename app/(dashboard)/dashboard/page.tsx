@@ -160,11 +160,11 @@ export default function DashboardOverviewPage() {
     loadDashboard(false);
   }, [loadDashboard]);
 
-  // Smart SWR Polling (15s interval + focus revalidation + visibility pause)
+  // Smart SWR Polling (1 min interval + focus revalidation + visibility pause)
   const { isRefreshing, lastRefreshedAt, refresh } = useSmartPolling(
     () => loadDashboard(true),
     {
-      intervalMs: 15000,
+      intervalMs: 60000,
       syncTopic: "overview",
     }
   );
