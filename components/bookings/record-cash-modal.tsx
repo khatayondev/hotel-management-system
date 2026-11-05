@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/controls";
 import { Dialog } from "@/components/ui/dialog-and-drawer";
 import { formatPesewas } from "@/lib/money";
+import { triggerGlobalDataSync } from "@/hooks/use-smart-polling";
 
 interface RecordCashModalProps {
   isOpen: boolean;
@@ -112,6 +113,7 @@ export function RecordCashModal({
         throw new Error(json.error?.message || "Failed to record payment");
       }
 
+      triggerGlobalDataSync("all");
       onSuccess();
       onClose();
     } catch (err) {
@@ -388,3 +390,4 @@ export function RecordCashModal({
     </Dialog>
   );
 }
+

@@ -70,7 +70,6 @@ function BookingsContent() {
   });
 
   const [selectedBookingId, setSelectedBookingId] = React.useState<string | null>(null);
-  const [sseConnected, setSseConnected] = React.useState(false);
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
   // Smart Search Auto-Suggest State
@@ -234,43 +233,11 @@ function BookingsContent() {
     loadBookings();
   }, [loadBookings, refreshTrigger]);
 
-  // Approach A: Smart SWR Polling (30s interval + focus revalidation + visibility pause)
+  // Smart SWR Polling (15s interval + focus revalidation + instant cross-tab sync)
   const { isRefreshing, lastRefreshedAt, refresh: manualRefresh } = useSmartPolling(loadBookings, {
-    intervalMs: 30000,
+    intervalMs: 15000,
     syncTopic: "bookings",
   });
-
-  // 3. Real-Time Server-Sent Events (SSE) Listener
-  React.useEffect(() => {
-    let es: EventSource | null = null;
-    try {
-      es = new EventSource("/api/admin/bookings/events");
-      es.onopen = () => {
-        setSseConnected(true);
-      };
-      es.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.type !== "CONNECTED") {
-            setRefreshTrigger((prev) => prev + 1);
-          }
-        } catch {
-          // ignore non-json pings
-        }
-      };
-      es.onerror = () => {
-        setSseConnected(false);
-      };
-    } catch {
-      // quiet
-    }
-
-    return () => {
-      if (es) {
-        es.close();
-      }
-    };
-  }, []);
 
   // Drag-to-Reschedule handler with Instant Optimistic Snapping & Rollback
   const handleReschedule = async (

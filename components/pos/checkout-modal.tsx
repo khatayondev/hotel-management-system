@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/controls";
 import { Dialog } from "@/components/ui/dialog-and-drawer";
 import { formatPesewas } from "@/lib/money";
+import { triggerGlobalDataSync } from "@/hooks/use-smart-polling";
 import type { PosPaymentSplitInput, PosCheckoutInput, PosReceiptDetail, PaymentMethod } from "@/lib/pos/types";
 
 export function CheckoutModal({
@@ -242,6 +243,7 @@ export function CheckoutModal({
         throw new Error(data.error?.message || "Failed to process POS checkout");
       }
 
+      triggerGlobalDataSync("all");
       onSuccess(data.data.receipt);
       onClose();
     } catch (err: unknown) {

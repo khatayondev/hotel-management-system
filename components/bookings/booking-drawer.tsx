@@ -29,6 +29,7 @@ import { PaymentRequestsList } from "@/components/payment-requests/payment-reque
 import { RefundModal } from "./refund-modal";
 import { RecordCashModal } from "./record-cash-modal";
 import { Banknote } from "lucide-react";
+import { triggerGlobalDataSync } from "@/hooks/use-smart-polling";
 
 interface BookingDrawerProps {
   bookingId: string | null;
@@ -67,6 +68,11 @@ export function BookingDrawer({
   const [refundModalOpen, setRefundModalOpen] = React.useState(false);
 
   // Refetch helper
+  const handleRefresh = React.useCallback(() => {
+    triggerGlobalDataSync("all");
+    onRefresh();
+  }, [onRefresh]);
+
   const refetch = React.useCallback(async () => {
     if (!bookingId) return;
     try {
@@ -126,7 +132,7 @@ export function BookingDrawer({
         setCancelModalOpen(false);
         setCancelReason("");
         await refetch();
-        onRefresh();
+        handleRefresh();
       } else {
         setError(json.error?.message || "Status update failed");
       }
@@ -153,7 +159,7 @@ export function BookingDrawer({
       if (json.success) {
         setNewNote("");
         await refetch();
-        onRefresh();
+        handleRefresh();
       } else {
         setError(json.error?.message || "Failed to add note");
       }
@@ -195,7 +201,7 @@ export function BookingDrawer({
       if (json.success) {
         setRescheduleModalOpen(false);
         await refetch();
-        onRefresh();
+        handleRefresh();
       } else {
         setError(json.error?.message || "Rescheduling failed");
       }
@@ -223,7 +229,7 @@ export function BookingDrawer({
       if (json.success) {
         setReassignModalOpen(false);
         await refetch();
-        onRefresh();
+        handleRefresh();
       } else {
         setError(json.error?.message || "Reassignment failed");
       }
@@ -667,7 +673,7 @@ export function BookingDrawer({
                   bookingId={booking.id}
                   onBalanceChange={() => {
                     refetch();
-                    onRefresh();
+                    handleRefresh();
                   }}
                 />
               </Card>
@@ -914,7 +920,7 @@ export function BookingDrawer({
           balanceDuePesewas={booking.balanceDuePesewas}
           onSuccess={async () => {
             await refetch();
-            onRefresh();
+            handleRefresh();
           }}
         />
       )}
@@ -930,7 +936,7 @@ export function BookingDrawer({
           amountPaidPesewas={booking.amountPaidPesewas}
           onSuccess={async () => {
             await refetch();
-            onRefresh();
+            handleRefresh();
           }}
         />
       )}
@@ -946,7 +952,7 @@ export function BookingDrawer({
           balanceDuePesewas={booking.balanceDuePesewas}
           onSuccess={async () => {
             await refetch();
-            onRefresh();
+            handleRefresh();
           }}
         />
       )}

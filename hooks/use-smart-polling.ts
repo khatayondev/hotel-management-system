@@ -78,11 +78,11 @@ export function useSmartPolling(
   options: SmartPollingOptions = {}
 ) {
   const {
-    intervalMs = 30000,
+    intervalMs = 15000,
     enabled = true,
     revalidateOnFocus = true,
     revalidateOnReconnect = true,
-    minFocusThrottleMs = 5000,
+    minFocusThrottleMs = 10000,
     syncTopic = "all",
   } = options;
 

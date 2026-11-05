@@ -133,7 +133,7 @@ export default function DashboardOverviewPage() {
   const [isExporting, setIsExporting] = React.useState(false);
 
   // Fetch live dashboard telemetry
-  const loadDashboard = React.useCallback(async () => {
+  const loadDashboard = React.useCallback(async (isSilent = true) => {
     try {
       const res = await fetch("/api/dashboard/overview");
       if (res.ok) {
@@ -143,11 +143,13 @@ export default function DashboardOverviewPage() {
         if (typeof window !== "undefined") {
           window.location.href = "/login?redirect=/dashboard";
         }
-      } else {
+      } else if (!isSilent) {
         setNotification({ type: "error", message: "Failed to load dashboard metrics." });
       }
     } catch {
-      setNotification({ type: "error", message: "Network error loading dashboard telemetry." });
+      if (!isSilent) {
+        setNotification({ type: "error", message: "Network error loading dashboard telemetry." });
+      }
     } finally {
       setLoading(false);
     }
@@ -155,14 +157,17 @@ export default function DashboardOverviewPage() {
 
   // Initial load on mount
   React.useEffect(() => {
-    loadDashboard();
+    loadDashboard(false);
   }, [loadDashboard]);
 
-  // Smart SWR Polling (30s interval + focus revalidation + visibility pause)
-  const { isRefreshing, lastRefreshedAt, refresh } = useSmartPolling(loadDashboard, {
-    intervalMs: 30000,
-    syncTopic: "overview",
-  });
+  // Smart SWR Polling (15s interval + focus revalidation + visibility pause)
+  const { isRefreshing, lastRefreshedAt, refresh } = useSmartPolling(
+    () => loadDashboard(true),
+    {
+      intervalMs: 15000,
+      syncTopic: "overview",
+    }
+  );
 
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
