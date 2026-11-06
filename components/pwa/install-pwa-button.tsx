@@ -5,6 +5,7 @@ import { Download, Check, Sparkles, Monitor, Smartphone, Tablet, RefreshCw, X, A
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog-and-drawer";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -298,8 +299,8 @@ function InstallHelperModal({
       <div className="space-y-4 py-2 text-zinc-900">
         {/* Banner */}
         <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-black text-white border border-white/10 shadow-md">
-          <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-400/40 flex items-center justify-center shrink-0">
-            <span className="text-sm font-black text-amber-400">BC</span>
+          <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-400/40 flex items-center justify-center shrink-0 p-1.5">
+            <BrandLogo variant="mark" theme="gold" size="xs" />
           </div>
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-1.5">

@@ -36,6 +36,7 @@ import { StatusChip } from "@/components/ui/status-chip";
 import { InstallPwaButton } from "@/components/pwa/install-pwa-button";
 import { useAuth } from "@/components/auth/auth-context";
 import { useSmartPolling } from "@/hooks/use-smart-polling";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { ROLES, UserRole, PERMISSION_KEYS } from "@/lib/rbac";
 
 interface NavItem {
@@ -388,8 +389,8 @@ export function AppShell({
               className="flex items-center gap-2.5 px-2 py-1.5 rounded-2xl hover:bg-white/10 transition-all group min-w-0 text-left cursor-pointer"
               title="Click logo to collapse sidebar & hide topbar for maximum calendar room"
             >
-              <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 group-hover:border-amber-400/50 group-hover:scale-105 transition-all">
-                <Crown className="w-4 h-4 text-amber-300" />
+              <div className="w-9 h-9 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md shrink-0 group-hover:border-amber-400/50 group-hover:scale-105 transition-all p-1">
+                <BrandLogo variant="mark" theme="gold" size="xs" />
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm font-extrabold text-white tracking-tight leading-tight uppercase truncate">
@@ -417,12 +418,12 @@ export function AppShell({
               type="button"
               onClick={toggleFocusMode}
               className={cn(
-                "w-10 h-10 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md hover:border-amber-400/70 hover:scale-105 transition-all cursor-pointer relative",
+                "w-10 h-10 rounded-2xl bg-zinc-900 border border-white/15 text-white flex items-center justify-center font-bold text-sm shadow-md hover:border-amber-400/70 hover:scale-105 transition-all cursor-pointer relative p-1.5",
                 focusMode && "border-amber-400/80 shadow-amber-400/20"
               )}
               title={focusMode ? "Click logo to restore topbar and sidebar" : "Click logo to collapse sidebar & hide topbar"}
             >
-              <Crown className="w-4 h-4 text-amber-300" />
+              <BrandLogo variant="mark" theme="gold" size="sm" />
               {focusMode && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-black animate-pulse" />
               )}
@@ -800,7 +801,7 @@ export function AppShell({
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-zinc-950/90 hover:bg-black text-white backdrop-blur-md shadow-lg border border-white/20 transition-all hover:scale-105 cursor-pointer"
               title="Click to restore top header and sidebar"
             >
-              <Crown className="w-3 h-3 text-amber-300" />
+              <BrandLogo variant="mark" theme="gold" size="xs" />
               <span>Full View Active</span>
               <span className="text-[10px] text-zinc-400 font-normal">• Click logo or here to restore</span>
             </button>

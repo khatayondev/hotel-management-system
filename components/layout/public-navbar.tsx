@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Menu, X, ArrowRight, Calendar } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 interface SearchItem {
   id: string;
@@ -166,8 +167,9 @@ export function PublicNavbar() {
     <>
       <header className="absolute top-0 left-0 right-0 z-50 w-full bg-transparent text-white transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-3.5 sm:py-5 flex items-center justify-between gap-4 lg:gap-6">
-          {/* Brand Logo in Clean Modern Sans-Serif */}
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
+          {/* Brand Logo with Official Gold Mark & Modern Typography */}
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer shrink-0">
+            <BrandLogo variant="mark" theme="gold" size="sm" className="drop-shadow-sm group-hover:scale-105 transition-transform" />
             <span className="text-white text-lg sm:text-2xl font-black tracking-tight group-hover:text-zinc-200 transition-colors">
               Becca&apos;s Crown
             </span>
@@ -329,8 +331,9 @@ export function PublicNavbar() {
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2.5"
               >
+                <BrandLogo variant="mark" theme="gold" size="xs" />
                 <span className="text-white text-base font-bold tracking-tight">
                   Becca&apos;s Crown
                 </span>

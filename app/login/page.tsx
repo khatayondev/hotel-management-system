@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Crown, Lock, ArrowRight, ShieldCheck, KeyRound, Eye, EyeOff } from "lucide-react";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label, Input } from "@/components/ui/controls";
@@ -110,14 +111,14 @@ function StaffLoginForm() {
       <div className="w-full max-w-md">
         {/* Branding header */}
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#1E1E1E] text-white flex items-center justify-center mx-auto mb-3 shadow-md">
-            <Crown className="w-6 h-6 text-amber-300" />
+          <div className="w-14 h-14 rounded-2xl bg-zinc-950 text-white flex items-center justify-center mx-auto mb-3 shadow-lg border border-white/10 p-2.5">
+            <BrandLogo variant="mark" theme="gold" size="md" />
           </div>
-          <h1 className="text-2xl font-extrabold text-[#1E1E1E] tracking-tight">
+          <h1 className="text-2xl font-black text-[#1E1E1E] tracking-tight">
             Staff Portal
           </h1>
-          <p className="text-xs text-[#71717A] mt-1">
-            Becca&apos;s Crown • Accra, Ghana
+          <p className="text-xs text-[#71717A] mt-1 font-semibold uppercase tracking-wider">
+            Becca&apos;s Crown Beauty Vault • Accra
           </p>
         </div>
 

@@ -1,5 +1,5 @@
-// Becca's Crown Beauty Vault - Enterprise PWA Service Worker v5
-const CACHE_NAME = "beccascrown-dashboard-v5";
+// Becca's Crown Beauty Vault - Enterprise PWA Service Worker v6
+const CACHE_NAME = "beccascrown-dashboard-v6";
 const OFFLINE_URL = "/offline.html";
 
 const PRECACHE_ASSETS = [
@@ -11,6 +11,9 @@ const PRECACHE_ASSETS = [
   "/icons/icon-maskable-192.png",
   "/icons/icon-maskable-512.png",
   "/icons/apple-touch-icon.png",
+  "/images/logo/logo-mark-gold.svg",
+  "/images/logo/logo-mark-white.svg",
+  "/images/logo/logo-white.svg",
 ];
 
 // 1. Install lifecycle: Precache core offline assets
