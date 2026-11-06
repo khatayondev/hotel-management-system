@@ -10,8 +10,8 @@ import { logger } from "./logger";
 export const SESSION_COOKIE_NAME = "aura_session";
 
 // Session lifecycles
-export const SESSION_ABSOLUTE_EXPIRY_HOURS = 24 * 14; // 14 days max lifetime
-export const SESSION_IDLE_TIMEOUT_HOURS = 24; // 24 hours idle timeout for salon operational tablets & laptops
+export const SESSION_ABSOLUTE_EXPIRY_HOURS = 24 * 30; // 30 days max lifetime
+export const SESSION_IDLE_TIMEOUT_HOURS = 24 * 7; // 7 days idle timeout for salon operational tablets & laptops
 export const MAX_LOGIN_ATTEMPTS = 5;
 export const LOCKOUT_DURATION_MINUTES = 15;
 
@@ -384,7 +384,16 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
-  return validateSessionToken(token);
+  const session = await validateSessionToken(token);
+  if (!session) {
+    try {
+      cookieStore.delete(SESSION_COOKIE_NAME);
+    } catch {
+      // In contexts where cookies cannot be mutated, ignore
+    }
+    return null;
+  }
+  return session;
 }
 
 /**

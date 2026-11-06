@@ -141,6 +141,9 @@ export default function DashboardOverviewPage() {
         setData(json.data);
       } else if (res.status === 401) {
         if (typeof window !== "undefined") {
+          try {
+            document.cookie = "aura_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+          } catch {}
           window.location.href = "/login?redirect=/dashboard";
         }
       } else if (!isSilent) {
@@ -330,7 +333,34 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* BOOKINGS STATCARDS (Moved from bookings page to maximize appointment calendar space) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {!loading && !data ? (
+          <div className="p-6 rounded-2xl bg-zinc-50 border border-zinc-200 text-center space-y-3">
+            <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
+            <h3 className="text-base font-bold text-zinc-900">Unable to load studio metrics</h3>
+            <p className="text-xs text-zinc-500 max-w-md mx-auto">
+              We couldn&apos;t reach the live operational database or your session expired.
+            </p>
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <Button
+                variant="blackPill"
+                size="sm"
+                onClick={() => {
+                  setLoading(true);
+                  loadDashboard(false);
+                }}
+                className="cursor-pointer font-bold"
+              >
+                Retry Loading
+              </Button>
+              <Link href="/login">
+                <Button variant="outlinePill" size="sm" className="cursor-pointer font-bold">
+                  Re-login to Studio
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link href="/bookings" className="group">
             <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-black/30 hover:shadow-sm transition-all">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block group-hover:text-zinc-700">Total Bookings</span>
@@ -380,9 +410,11 @@ export default function DashboardOverviewPage() {
             </div>
           </Link>
         </div>
+        )}
 
         {/* FRONT DESK TABLET BOARD (NO STATCARDS, FUNCTIONAL OPERATIONAL COMMAND CENTER) */}
-        {data?.user?.role === "FRONT_DESK" || data?.user?.role === "STAFF_RECEPTIONIST" ? (
+        {(loading || data) && (
+          data?.user?.role === "FRONT_DESK" || data?.user?.role === "STAFF_RECEPTIONIST" ? (
           <FrontDeskTabletBoard
             todayChecklist={data?.todayChecklist || []}
             pendingPayments={data?.pendingPayments || []}
@@ -957,7 +989,7 @@ export default function DashboardOverviewPage() {
           )}
         </div>
       </>
-    )}
+    ))}
       </div>
 
       {/* DOWNLOAD REPORT MODAL */}

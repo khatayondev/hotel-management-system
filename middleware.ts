@@ -52,10 +52,8 @@ export function middleware(request: NextRequest) {
       const targetUrl = new URL(sessionCookie ? "/dashboard" : "/login", request.url);
       return applySecurityHeaders(NextResponse.redirect(targetUrl));
     }
-    if (pathname === "/login" && sessionCookie) {
-      const targetUrl = new URL("/dashboard", request.url);
-      return applySecurityHeaders(NextResponse.redirect(targetUrl));
-    }
+    // Note: Do NOT redirect /login to /dashboard here. If a user visits /login,
+    // they must be allowed to log in (or re-authenticate if their session expired).
   }
 
   // 1. CSRF Protection for state-changing requests

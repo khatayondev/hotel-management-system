@@ -139,11 +139,11 @@ export function AppShell({
 
   const displayName = user?.name
     ? user.name.split(" ")[0]
-    : userName && userName !== "Akosua"
-    ? userName
+    : userName
+    ? userName.split(" ")[0]
     : "Studio";
 
-  const fullName = user?.name || (userName !== "Akosua" ? userName : "Studio Member");
+  const fullName = user?.name || userName || "Studio Member";
 
   const roleTitle =
     user?.role === ROLES.FRONT_DESK
@@ -423,7 +423,7 @@ export function AppShell({
               )}
               title={focusMode ? "Click logo to restore topbar and sidebar" : "Click logo to collapse sidebar & hide topbar"}
             >
-              <BrandLogo variant="mark" theme="gold" size="sm" />
+              <BrandLogo variant="mark" theme="gold" size="xs" />
               {focusMode && (
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 ring-2 ring-black animate-pulse" />
               )}

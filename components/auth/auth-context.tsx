@@ -62,6 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUser(null);
         if (res.status === 401 && typeof window !== "undefined") {
+          try {
+            document.cookie = "aura_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+          } catch {}
           const path = window.location.pathname;
           const protectedPrefixes = [
             "/dashboard",
