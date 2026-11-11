@@ -23,6 +23,12 @@ describe("Prompt 7: Business Settings & Encryption Unit Tests", () => {
             "booking_minimum_notice_hours",
             "paystack_public_key",
             "paystack_secret_key",
+            "hotel_name",
+            "standard_check_in_time",
+            "standard_check_out_time",
+            "free_cancel_hours_before_check_in",
+            "cancellation_penalty_percent",
+            "tax_configuration",
           ],
         },
       },
@@ -155,5 +161,69 @@ describe("Prompt 7: Business Settings & Encryption Unit Tests", () => {
     });
     expect(audit).toBeDefined();
     expect(audit?.entityType).toBe("SETTING");
+  });
+
+  it("handles HMS extensions: hotel name, check-in/out times, cancellation penalty, and taxes", async () => {
+    const ownerUser = {
+      id: "owner-hms-test",
+      role: ROLES.OWNER_ADMIN,
+      name: "Akosua Addo",
+    };
+
+    // 1. Initial state has default values and empty taxes
+    const initialSettings = await getSettings();
+    expect(initialSettings.hotelName).toBeDefined();
+    expect(initialSettings.standardCheckInTime).toBe("14:00");
+    expect(initialSettings.standardCheckOutTime).toBe("11:00");
+    expect(initialSettings.freeCancelHoursBeforeCheckIn).toBe(24);
+    expect(initialSettings.cancellationPenaltyPercent).toBe(50);
+    expect(Array.isArray(initialSettings.taxes)).toBe(true);
+    expect(initialSettings.taxes).toEqual([]);
+
+    // 2. Validate time format schema
+    expect(updateSettingsSchema.safeParse({ standardCheckInTime: "15:00" }).success).toBe(true);
+    expect(updateSettingsSchema.safeParse({ standardCheckInTime: "25:00" }).success).toBe(false);
+    expect(updateSettingsSchema.safeParse({ standardCheckOutTime: "10:30" }).success).toBe(true);
+    expect(updateSettingsSchema.safeParse({ standardCheckOutTime: "invalid" }).success).toBe(false);
+
+    // 3. Save HMS settings with named toggleable taxes
+    const saved = await saveSettings(
+      {
+        hotelName: "Aura Grand Hotel & Restaurant",
+        standardCheckInTime: "15:00",
+        standardCheckOutTime: "10:30",
+        freeCancelHoursBeforeCheckIn: 48,
+        cancellationPenaltyPercent: 100,
+        taxes: [
+          { id: "tax-vat", name: "VAT", percentage: 15.0, enabled: true },
+          { id: "tax-nhil", name: "NHIL", percentage: 2.5, enabled: true },
+          { id: "tax-tourism", name: "Tourism Levy", percentage: 1.0, enabled: false },
+        ],
+      },
+      ownerUser
+    );
+
+    expect(saved.hotelName).toBe("Aura Grand Hotel & Restaurant");
+    expect(saved.standardCheckInTime).toBe("15:00");
+    expect(saved.standardCheckOutTime).toBe("10:30");
+    expect(saved.freeCancelHoursBeforeCheckIn).toBe(48);
+    expect(saved.cancellationPenaltyPercent).toBe(100);
+    expect(saved.taxes.length).toBe(3);
+    expect(saved.taxes[0]).toEqual({
+      id: "tax-vat",
+      name: "VAT",
+      percentage: 15,
+      enabled: true,
+    });
+    expect(saved.taxes[2].enabled).toBe(false);
+
+    // 4. Retrieve settings fresh and verify persistence
+    const reloaded = await getSettings();
+    expect(reloaded.hotelName).toBe("Aura Grand Hotel & Restaurant");
+    expect(reloaded.standardCheckInTime).toBe("15:00");
+    expect(reloaded.standardCheckOutTime).toBe("10:30");
+    expect(reloaded.freeCancelHoursBeforeCheckIn).toBe(48);
+    expect(reloaded.cancellationPenaltyPercent).toBe(100);
+    expect(reloaded.taxes.length).toBe(3);
   });
 });

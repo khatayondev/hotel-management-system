@@ -21,6 +21,7 @@ import {
   DepositRefundPolicy,
   STUDIO_CURRENCY,
   STUDIO_TIMEZONE,
+  TaxSetting,
 } from "./settings-types";
 
 // Zod Schema for settings update payload
@@ -71,6 +72,29 @@ export const updateSettingsSchema = z.object({
     .string()
     .min(1)
     .max(11, "SMS Sender ID cannot exceed 11 characters (Ghana GSM standard)")
+    .optional(),
+
+  // HMS & Hotel Extensions
+  hotelName: z.string().min(2, "Hotel name is required").optional(),
+  standardCheckInTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid check-in time (HH:MM)")
+    .optional(),
+  standardCheckOutTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid check-out time (HH:MM)")
+    .optional(),
+  freeCancelHoursBeforeCheckIn: z.number().int().min(0).max(720).optional(),
+  cancellationPenaltyPercent: z.number().min(0).max(100).optional(),
+  taxes: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1, "Tax name is required"),
+        percentage: z.number().min(0).max(100, "Percentage must be between 0 and 100"),
+        enabled: z.boolean(),
+      })
+    )
     .optional(),
 });
 
@@ -170,6 +194,39 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
   // SMS Sender ID
   const smsSenderId = map.get("sms_sender_id") || DEFAULT_BUSINESS_SETTINGS.smsSenderId;
 
+  // HMS & Hotel Extensions
+  const hotelName =
+    map.get("hotel_name") ||
+    map.get("salon_name") ||
+    map.get("business_name") ||
+    DEFAULT_BUSINESS_SETTINGS.hotelName;
+
+  const standardCheckInTime =
+    map.get("standard_check_in_time") || DEFAULT_BUSINESS_SETTINGS.standardCheckInTime;
+
+  const standardCheckOutTime =
+    map.get("standard_check_out_time") || DEFAULT_BUSINESS_SETTINGS.standardCheckOutTime;
+
+  const freeCancelHoursBeforeCheckIn = map.has("free_cancel_hours_before_check_in")
+    ? Number.parseInt(map.get("free_cancel_hours_before_check_in")!, 10)
+    : map.has("cancellation_notice_hours")
+      ? Number.parseInt(map.get("cancellation_notice_hours")!, 10)
+      : DEFAULT_BUSINESS_SETTINGS.freeCancelHoursBeforeCheckIn;
+
+  const cancellationPenaltyPercent = map.has("cancellation_penalty_percent")
+    ? Number.parseFloat(map.get("cancellation_penalty_percent")!)
+    : DEFAULT_BUSINESS_SETTINGS.cancellationPenaltyPercent;
+
+  let taxes: TaxSetting[] = [];
+  const taxesRaw = map.get("tax_configuration");
+  if (taxesRaw) {
+    try {
+      taxes = JSON.parse(taxesRaw);
+    } catch {
+      taxes = [];
+    }
+  }
+
   return {
     businessName,
     businessLogo,
@@ -190,6 +247,12 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
     smsSenderId,
     currency: STUDIO_CURRENCY,
     timezone: STUDIO_TIMEZONE,
+    hotelName,
+    standardCheckInTime,
+    standardCheckOutTime,
+    freeCancelHoursBeforeCheckIn,
+    cancellationPenaltyPercent,
+    taxes,
   };
 }
 
@@ -325,6 +388,54 @@ export async function saveSettings(
       key: "sms_sender_id",
       value: parsed.smsSenderId.trim(),
       description: "Ghana GSM alphanumeric SMS Sender ID (max 11 chars)",
+    });
+  }
+  if (parsed.hotelName !== undefined) {
+    entriesToUpsert.push({
+      key: "hotel_name",
+      value: parsed.hotelName.trim(),
+      description: "Official Hotel Name",
+    });
+    // Keep business_name synchronized as fallback
+    entriesToUpsert.push({
+      key: "business_name",
+      value: parsed.hotelName.trim(),
+      description: "Business profile name",
+    });
+  }
+  if (parsed.standardCheckInTime !== undefined) {
+    entriesToUpsert.push({
+      key: "standard_check_in_time",
+      value: parsed.standardCheckInTime,
+      description: "Standard hotel check-in time (HH:MM)",
+    });
+  }
+  if (parsed.standardCheckOutTime !== undefined) {
+    entriesToUpsert.push({
+      key: "standard_check_out_time",
+      value: parsed.standardCheckOutTime,
+      description: "Standard hotel check-out time (HH:MM)",
+    });
+  }
+  if (parsed.freeCancelHoursBeforeCheckIn !== undefined) {
+    entriesToUpsert.push({
+      key: "free_cancel_hours_before_check_in",
+      value: parsed.freeCancelHoursBeforeCheckIn.toString(),
+      description: "Hours before check-in for free cancellation",
+    });
+  }
+  if (parsed.cancellationPenaltyPercent !== undefined) {
+    entriesToUpsert.push({
+      key: "cancellation_penalty_percent",
+      value: parsed.cancellationPenaltyPercent.toString(),
+      description: "Cancellation penalty percentage after cutoff (0-100%)",
+    });
+  }
+  if (parsed.taxes !== undefined) {
+    entriesToUpsert.push({
+      key: "tax_configuration",
+      value: JSON.stringify(parsed.taxes),
+      description: "Named toggleable percentage taxes",
     });
   }
 

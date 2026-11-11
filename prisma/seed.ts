@@ -1,9 +1,6 @@
 import {
   PrismaClient,
   DepositType,
-  BookingStatus,
-  BookingSource,
-  PaymentStatus,
 } from "@prisma/client";
 import { hash } from "@node-rs/argon2";
 import { PERMISSION_KEYS, DEFAULT_ROLE_PERMISSIONS, ROLES } from "../lib/rbac";
@@ -49,6 +46,39 @@ async function main() {
     create: {
       name: ROLES.FRONT_DESK,
       description: "Front desk tablet terminal: appointments board, check-in, walk-in POS, and customer contact",
+    },
+  });
+
+  const housekeepingRole = await prisma.role.upsert({
+    where: { name: ROLES.HOUSEKEEPING },
+    update: {
+      description: "Housekeeping staff: view and update housekeeping tasks and room status only",
+    },
+    create: {
+      name: ROLES.HOUSEKEEPING,
+      description: "Housekeeping staff: view and update housekeeping tasks and room status only",
+    },
+  });
+
+  const kitchenRole = await prisma.role.upsert({
+    where: { name: ROLES.KITCHEN },
+    update: {
+      description: "Kitchen staff: view and update kitchen orders only",
+    },
+    create: {
+      name: ROLES.KITCHEN,
+      description: "Kitchen staff: view and update kitchen orders only",
+    },
+  });
+
+  const waiterRole = await prisma.role.upsert({
+    where: { name: ROLES.WAITER },
+    update: {
+      description: "Restaurant waiter: create and view restaurant orders, POS restaurant, view ready orders",
+    },
+    create: {
+      name: ROLES.WAITER,
+      description: "Restaurant waiter: create and view restaurant orders, POS restaurant, view ready orders",
     },
   });
 
@@ -125,6 +155,57 @@ async function main() {
         update: {},
         create: {
           roleId: frontDeskRole.id,
+          permissionId: perm.id,
+        },
+      });
+    }
+
+    // Housekeeping default permissions
+    if (DEFAULT_ROLE_PERMISSIONS[ROLES.HOUSEKEEPING]?.includes(permName)) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: housekeepingRole.id,
+            permissionId: perm.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: housekeepingRole.id,
+          permissionId: perm.id,
+        },
+      });
+    }
+
+    // Kitchen default permissions
+    if (DEFAULT_ROLE_PERMISSIONS[ROLES.KITCHEN]?.includes(permName)) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: kitchenRole.id,
+            permissionId: perm.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: kitchenRole.id,
+          permissionId: perm.id,
+        },
+      });
+    }
+
+    // Waiter default permissions
+    if (DEFAULT_ROLE_PERMISSIONS[ROLES.WAITER]?.includes(permName)) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: {
+            roleId: waiterRole.id,
+            permissionId: perm.id,
+          },
+        },
+        update: {},
+        create: {
+          roleId: waiterRole.id,
           permissionId: perm.id,
         },
       });
@@ -216,6 +297,99 @@ async function main() {
       passwordHash: managerPasswordHash,
       roleId: managerRole.id,
       mustChangePassword: false,
+      active: true,
+    },
+  });
+
+  // Seed Hotel & Restaurant Staff Users
+  const hotelStaffPasswordHash = await hash("HotelStaff2026!");
+
+  await prisma.user.upsert({
+    where: { email: "owner@aurastudio.gh" },
+    update: {
+      passwordHash: ownerPasswordHash,
+      roleId: ownerRole.id,
+      active: true,
+      deletedAt: null,
+    },
+    create: {
+      email: "owner@aurastudio.gh",
+      name: "Aura Studio Owner",
+      phone: "+233240000000",
+      passwordHash: ownerPasswordHash,
+      roleId: ownerRole.id,
+      active: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "frontdesk@aurahotel.gh" },
+    update: {
+      passwordHash: hotelStaffPasswordHash,
+      roleId: frontDeskRole.id,
+      active: true,
+      deletedAt: null,
+    },
+    create: {
+      email: "frontdesk@aurahotel.gh",
+      name: "Front Desk Agent",
+      phone: "+233240000010",
+      passwordHash: hotelStaffPasswordHash,
+      roleId: frontDeskRole.id,
+      active: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "housekeeping@aurahotel.gh" },
+    update: {
+      passwordHash: hotelStaffPasswordHash,
+      roleId: housekeepingRole.id,
+      active: true,
+      deletedAt: null,
+    },
+    create: {
+      email: "housekeeping@aurahotel.gh",
+      name: "Housekeeping Lead",
+      phone: "+233240000020",
+      passwordHash: hotelStaffPasswordHash,
+      roleId: housekeepingRole.id,
+      active: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "kitchen@aurahotel.gh" },
+    update: {
+      passwordHash: hotelStaffPasswordHash,
+      roleId: kitchenRole.id,
+      active: true,
+      deletedAt: null,
+    },
+    create: {
+      email: "kitchen@aurahotel.gh",
+      name: "Head Chef",
+      phone: "+233240000030",
+      passwordHash: hotelStaffPasswordHash,
+      roleId: kitchenRole.id,
+      active: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "waiter@aurahotel.gh" },
+    update: {
+      passwordHash: hotelStaffPasswordHash,
+      roleId: waiterRole.id,
+      active: true,
+      deletedAt: null,
+    },
+    create: {
+      email: "waiter@aurahotel.gh",
+      name: "Restaurant Server",
+      phone: "+233240000040",
+      passwordHash: hotelStaffPasswordHash,
+      roleId: waiterRole.id,
       active: true,
     },
   });

@@ -59,6 +59,8 @@ model User {
   receiptsVoided         Receipt[]            @relation("ReceiptVoider")
   sessions               Session[]
   staff                  Staff?
+  housekeepingTasksAssigned HousekeepingTask[]   @relation("HousekeepingAssignee")
+  folioChargesCreated       FolioCharge[]        @relation("FolioChargeCreator")
   role                   Role                 @relation(fields: [roleId], references: [id])
 }
 
@@ -107,9 +109,15 @@ model Customer {
   preferences        String?
   birthdayMonth      Int?
   birthdayDay        Int?
-  tags               String[]  @default([])
+  tags               String[]      @default([])
+  idType             String?
+  idNumber           String?
+  nationality        String?
+  company            String?
+  vehiclePlate       String?
   bookings           Booking[]
   receipts           Receipt[]
+  reservations       Reservation[]
 
   @@index([phone])
   @@index([isAnonymized])
@@ -610,4 +618,256 @@ enum PaymentRequestStatus {
   FAILED
   EXPIRED
   CANCELLED
+}
+
+// -----------------------------------------------------------------------------
+// Hotel Domain Models & Enums
+// -----------------------------------------------------------------------------
+
+model RoomType {
+  id               String            @id @default(uuid())
+  name             String
+  slug             String            @unique
+  description      String?
+  maxAdults        Int               @default(2)
+  maxChildren      Int               @default(0)
+  bedConfiguration String
+  basePricePesewas Int
+  amenities        String[]          @default([])
+  imageUrls        String[]          @default([])
+  isActive         Boolean           @default(true)
+  sortOrder        Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  rooms            Room[]
+  rateOverrides    RateOverride[]
+  reservationRooms ReservationRoom[]
+  roomHolds        RoomHold[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Room {
+  id                String             @id @default(uuid())
+  number            String             @unique
+  floor             Int?
+  roomTypeId        String
+  status            RoomStatus         @default(CLEAN)
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roomType          RoomType           @relation(fields: [roomTypeId], references: [id])
+  reservationRooms  ReservationRoom[]
+  housekeepingTasks HousekeepingTask[]
+
+  @@index([roomTypeId])
+  @@index([status])
+}
+
+model RateOverride {
+  id           String    @id @default(uuid())
+  roomTypeId   String
+  startDate    DateTime  @db.Date
+  endDate      DateTime  @db.Date
+  pricePesewas Int
+  minNights    Int?
+  label        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  roomType     RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([roomTypeId, startDate, endDate])
+}
+
+model RoomExtra {
+  id                String             @id @default(uuid())
+  name              String
+  pricePesewas      Int
+  pricing           RoomExtraPricing   @default(PER_STAY)
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  reservationExtras ReservationExtra[]
+
+  @@index([isActive])
+}
+
+model Reservation {
+  id                     String            @id @default(uuid())
+  reference              String            @unique
+  guestId                String
+  checkInDate            DateTime          @db.Date
+  checkOutDate           DateTime          @db.Date
+  adults                 Int               @default(1)
+  children               Int               @default(0)
+  status                 ReservationStatus @default(PENDING_PAYMENT)
+  subtotalPesewas        Int
+  taxPesewas             Int               @default(0)
+  totalPesewas           Int
+  depositRequiredPesewas Int               @default(0)
+  amountPaidPesewas      Int               @default(0)
+  source                 ReservationSource @default(WEBSITE)
+  notes                  String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  guest                  Customer          @relation(fields: [guestId], references: [id])
+  rooms                  ReservationRoom[]
+  extras                 ReservationExtra[]
+  folios                 Folio[]
+
+  @@index([reference])
+  @@index([guestId])
+  @@index([status])
+  @@index([checkInDate, checkOutDate])
+}
+
+model ReservationRoom {
+  id                   String            @id @default(uuid())
+  reservationId        String            @map("reservation_id")
+  roomTypeId           String            @map("room_type_id")
+  roomId               String?           @map("room_id")
+  checkIn              DateTime          @map("check_in") @db.Date
+  checkOut             DateTime          @map("check_out") @db.Date
+  status               ReservationStatus @default(PENDING_PAYMENT)
+  nightlyRatesSnapshot Json              @map("nightly_rates_snapshot")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  roomType    RoomType    @relation(fields: [roomTypeId], references: [id])
+  room        Room?       @relation(fields: [roomId], references: [id])
+
+  @@index([reservationId])
+  @@index([roomTypeId])
+  @@index([roomId])
+  @@index([status])
+  @@index([checkIn, checkOut])
+}
+
+model ReservationExtra {
+  id            String      @id @default(uuid())
+  reservationId String
+  extraId       String
+  quantity      Int         @default(1)
+  pricePesewas  Int
+  totalPesewas  Int
+  createdAt     DateTime    @default(now())
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  extra         RoomExtra   @relation(fields: [extraId], references: [id])
+
+  @@index([reservationId])
+  @@index([extraId])
+}
+
+model RoomHold {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  roomTypeId String
+  checkIn    DateTime @db.Date
+  checkOut   DateTime @db.Date
+  quantity   Int      @default(1)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([roomTypeId, checkIn, checkOut])
+  @@index([expiresAt])
+}
+
+model HousekeepingTask {
+  id               String                 @id @default(uuid())
+  roomId           String
+  assignedToUserId String?
+  status           HousekeepingTaskStatus @default(PENDING)
+  notes            String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  room             Room                   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  assignedTo       User?                  @relation("HousekeepingAssignee", fields: [assignedToUserId], references: [id])
+
+  @@index([roomId])
+  @@index([assignedToUserId])
+  @@index([status])
+}
+
+model Folio {
+  id            String        @id @default(uuid())
+  folioNumber   String        @unique
+  reservationId String?
+  status        FolioStatus   @default(OPEN)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservation   Reservation?  @relation(fields: [reservationId], references: [id])
+  charges       FolioCharge[]
+
+  @@index([folioNumber])
+  @@index([reservationId])
+  @@index([status])
+}
+
+model FolioCharge {
+  id              String            @id @default(uuid())
+  folioId         String
+  description     String
+  source          FolioChargeSource
+  amountPesewas   Int
+  referenceId     String?
+  createdByUserId String?
+  createdAt       DateTime          @default(now())
+  folio           Folio             @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  createdByUser   User?             @relation("FolioChargeCreator", fields: [createdByUserId], references: [id])
+
+  @@index([folioId])
+  @@index([source])
+}
+
+enum RoomStatus {
+  CLEAN
+  DIRTY
+  INSPECTED
+  OCCUPIED
+  OUT_OF_ORDER
+}
+
+enum RoomExtraPricing {
+  PER_STAY
+  PER_NIGHT
+  PER_PERSON
+}
+
+enum ReservationStatus {
+  HELD
+  PENDING_PAYMENT
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum ReservationSource {
+  WEBSITE
+  FRONT_DESK
+}
+
+enum HousekeepingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum FolioStatus {
+  OPEN
+  SETTLED
+  VOID
+}
+
+enum FolioChargeSource {
+  ROOM
+  RESTAURANT
+  EXTRA
+  ADJUSTMENT
+  PAYMENT
 }

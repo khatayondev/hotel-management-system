@@ -38,7 +38,23 @@ const SENSITIVE_KEYS = new Set([
   "privatekey",
   "apikey",
   "paystacksecretkey",
+  "idnumber",
+  "id_number",
+  "nationalid",
+  "passport",
+  "passportnumber",
 ]);
+
+/**
+ * Masks an ID/Passport number string to prevent raw PII leakage:
+ * e.g. "GHA-712345678-9" -> "GHA-****-9"
+ */
+export function maskIdNumber(idNumber: string): string {
+  if (!idNumber || idNumber.length < 5) return "***";
+  const start = idNumber.slice(0, 4);
+  const end = idNumber.slice(-2);
+  return `${start}****${end}`;
+}
 
 /**
  * Masks a telephone string to prevent raw PII leakage:

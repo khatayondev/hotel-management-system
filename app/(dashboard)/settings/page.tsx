@@ -24,6 +24,8 @@ import {
   Save,
   ShieldAlert,
   Bell,
+  Hotel,
+  Percent,
 } from "lucide-react";
 import { NotificationTemplateEditor } from "@/components/notifications/template-editor";
 import {
@@ -33,6 +35,7 @@ import {
   Holiday,
   SlotIntervalMinutes,
   DepositRefundPolicy,
+  TaxSetting,
 } from "@/lib/settings-types";
 import { cn } from "@/lib/utils";
 
@@ -48,8 +51,8 @@ export default function SettingsPage() {
 
   // Active section tab
   const [activeTab, setActiveTab] = React.useState<
-    "profile" | "hours" | "holidays" | "rules" | "policy" | "payments" | "sms" | "notifications"
-  >("profile");
+    "hotel" | "taxes" | "profile" | "hours" | "holidays" | "rules" | "policy" | "payments" | "sms" | "notifications"
+  >("hotel");
 
   // Form states
   const [businessName, setBusinessName] = React.useState("");
@@ -57,6 +60,14 @@ export default function SettingsPage() {
   const [businessPhone, setBusinessPhone] = React.useState("");
   const [businessAddress, setBusinessAddress] = React.useState("");
   const [businessMapLink, setBusinessMapLink] = React.useState("");
+
+  // HMS Extensions Form States
+  const [hotelName, setHotelName] = React.useState("");
+  const [standardCheckInTime, setStandardCheckInTime] = React.useState("14:00");
+  const [standardCheckOutTime, setStandardCheckOutTime] = React.useState("11:00");
+  const [freeCancelHoursBeforeCheckIn, setFreeCancelHoursBeforeCheckIn] = React.useState("24");
+  const [cancellationPenaltyPercent, setCancellationPenaltyPercent] = React.useState("50");
+  const [taxes, setTaxes] = React.useState<TaxSetting[]>([]);
 
   const [openingHours, setOpeningHours] = React.useState<DaySchedule[]>([]);
   const [holidays, setHolidays] = React.useState<Holiday[]>([]);
@@ -97,6 +108,14 @@ export default function SettingsPage() {
           setBusinessPhone(data.businessPhone || "");
           setBusinessAddress(data.businessAddress || "");
           setBusinessMapLink(data.businessMapLink || "");
+
+          // HMS Extensions
+          setHotelName(data.hotelName || data.businessName || "");
+          setStandardCheckInTime(data.standardCheckInTime || "14:00");
+          setStandardCheckOutTime(data.standardCheckOutTime || "11:00");
+          setFreeCancelHoursBeforeCheckIn((data.freeCancelHoursBeforeCheckIn ?? 24).toString());
+          setCancellationPenaltyPercent((data.cancellationPenaltyPercent ?? 50).toString());
+          setTaxes(data.taxes || []);
 
           setOpeningHours(data.openingHours || []);
           setHolidays(data.holidays || []);
@@ -164,6 +183,13 @@ export default function SettingsPage() {
         depositRefundPolicy,
         cancellationPolicyText: cancellationPolicyText.trim(),
         smsSenderId: smsSenderId.trim(),
+        // HMS extensions
+        hotelName: hotelName.trim(),
+        standardCheckInTime: standardCheckInTime.trim(),
+        standardCheckOutTime: standardCheckOutTime.trim(),
+        freeCancelHoursBeforeCheckIn: Number.parseInt(freeCancelHoursBeforeCheckIn || "24", 10),
+        cancellationPenaltyPercent: Number.parseFloat(cancellationPenaltyPercent || "50"),
+        taxes,
       };
 
       // Only include payment keys if Owner and not masked
@@ -215,6 +241,33 @@ export default function SettingsPage() {
 
   const handleRemoveHoliday = (id: string) => {
     setHolidays((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  // Tax configuration handlers
+  const handleAddTax = () => {
+    setTaxes((prev) => [
+      ...prev,
+      {
+        id: `tax-${Date.now()}`,
+        name: "",
+        percentage: 0,
+        enabled: true,
+      },
+    ]);
+  };
+
+  const handleUpdateTax = (
+    id: string,
+    field: "name" | "percentage" | "enabled",
+    value: string | number | boolean
+  ) => {
+    setTaxes((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, [field]: value } : t))
+    );
+  };
+
+  const handleRemoveTax = (id: string) => {
+    setTaxes((prev) => prev.filter((t) => t.id !== id));
   };
 
   return (
@@ -294,6 +347,8 @@ export default function SettingsPage() {
         {/* Navigation Tabs */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
+            { id: "hotel", label: "Hotel & Check-In", icon: <Hotel className="w-3.5 h-3.5" /> },
+            { id: "taxes", label: "Tax Configuration", icon: <Percent className="w-3.5 h-3.5" /> },
             { id: "profile", label: "Studio Profile", icon: <Building2 className="w-3.5 h-3.5" /> },
             { id: "hours", label: "Opening Hours", icon: <Clock className="w-3.5 h-3.5" /> },
             { id: "holidays", label: "Holidays & Closures", icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -325,6 +380,201 @@ export default function SettingsPage() {
           <Card variant="white" className="p-8 h-96 animate-pulse bg-white/60" />
         ) : (
           <form onSubmit={handleSaveSettings} className="space-y-6">
+            {/* HOTEL & CHECK-IN SETTINGS */}
+            {activeTab === "hotel" && (
+              <Card variant="white" className="p-6 sm:p-8 space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-[#1E1E1E]">Hotel Identity & Stay Policies</h3>
+                  <p className="text-xs text-[#71717A] mt-0.5">
+                    Configure standard check-in/check-out hours, hotel property naming, and stay cancellation policies.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-2">
+                    <Label>Hotel Property Name *</Label>
+                    <Input
+                      disabled={isReadOnly}
+                      required
+                      value={hotelName}
+                      onChange={(e) => setHotelName(e.target.value)}
+                      placeholder="e.g. Aura Royal Hotel & Restaurant"
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Official hotel name displayed on guest reservations, folios, and invoices.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Standard Check-In Time (HH:MM) *</Label>
+                    <Input
+                      type="time"
+                      disabled={isReadOnly}
+                      required
+                      value={standardCheckInTime}
+                      onChange={(e) => setStandardCheckInTime(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Default guest check-in arrival time (24-hour format).
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Standard Check-Out Time (HH:MM) *</Label>
+                    <Input
+                      type="time"
+                      disabled={isReadOnly}
+                      required
+                      value={standardCheckOutTime}
+                      onChange={(e) => setStandardCheckOutTime(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Default guest check-out departure time (24-hour format).
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Free Cancellation Window (Hours before check-in) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="720"
+                      disabled={isReadOnly}
+                      required
+                      value={freeCancelHoursBeforeCheckIn}
+                      onChange={(e) => setFreeCancelHoursBeforeCheckIn(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Guests can cancel free of charge until {freeCancelHoursBeforeCheckIn} hours before check-in.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Late Cancellation Penalty (%) *</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      disabled={isReadOnly}
+                      required
+                      value={cancellationPenaltyPercent}
+                      onChange={(e) => setCancellationPenaltyPercent(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Percentage of the stay charged as penalty if cancelled after the free cutoff ({cancellationPenaltyPercent}%).
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* TAX CONFIGURATION */}
+            {activeTab === "taxes" && (
+              <Card variant="white" className="p-6 sm:p-8 space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-bold text-[#1E1E1E]">Tax Configuration</h3>
+                    <p className="text-xs text-[#71717A] mt-0.5">
+                      Configure named percentage taxes (e.g., VAT, NHIL, Tourism Levy). Each tax can be toggled without deleting. Rates are not hardcoded.
+                    </p>
+                  </div>
+                  {!isReadOnly && (
+                    <Button
+                      type="button"
+                      variant="blackPill"
+                      size="sm"
+                      onClick={handleAddTax}
+                      className="gap-1.5 cursor-pointer text-xs shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Tax</span>
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {taxes.length === 0 ? (
+                    <div className="py-12 text-center rounded-2xl border border-dashed border-[#E4E4E7] bg-[#FAFAFB] text-[#71717A] text-xs">
+                      <p className="font-semibold">No taxes configured (default empty).</p>
+                      <p className="text-[11px] text-[#A1A1AA] mt-1">
+                        Click &ldquo;Add Tax&rdquo; above to set up named percentage taxes applicable to rooms and restaurant orders.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-[#F4F4F6] border border-[#E4E4E7] rounded-2xl overflow-hidden bg-white">
+                      {taxes.map((tax, idx) => (
+                        <div
+                          key={tax.id || idx}
+                          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#FAFAFB] transition-colors"
+                        >
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-[11px]">Tax Name *</Label>
+                              <Input
+                                disabled={isReadOnly}
+                                required
+                                placeholder="e.g. VAT or Tourism Levy"
+                                value={tax.name}
+                                onChange={(e) => handleUpdateTax(tax.id, "name", e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px]">Rate Percentage (%) *</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                disabled={isReadOnly}
+                                required
+                                placeholder="e.g. 15.0 or 2.5"
+                                value={tax.percentage}
+                                onChange={(e) =>
+                                  handleUpdateTax(
+                                    tax.id,
+                                    "percentage",
+                                    Number.parseFloat(e.target.value) || 0
+                                  )
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 sm:pt-4">
+                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#1E1E1E]">
+                              <input
+                                type="checkbox"
+                                disabled={isReadOnly}
+                                checked={tax.enabled}
+                                onChange={(e) =>
+                                  handleUpdateTax(tax.id, "enabled", e.target.checked)
+                                }
+                                className="w-4 h-4 rounded text-black focus:ring-black accent-black cursor-pointer"
+                              />
+                              <span>{tax.enabled ? "Active" : "Disabled"}</span>
+                            </label>
+
+                            {!isReadOnly && (
+                              <Button
+                                type="button"
+                                variant="circularIcon"
+                                size="iconSm"
+                                onClick={() => handleRemoveTax(tax.id)}
+                                className="w-8 h-8 text-[#71717A] hover:text-[#EF4444]"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
+
             {/* 1. STUDIO PROFILE */}
             {activeTab === "profile" && (
               <Card variant="white" className="p-6 sm:p-8 space-y-6">

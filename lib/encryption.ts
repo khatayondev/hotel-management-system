@@ -96,3 +96,17 @@ export function maskSecretKey(key: string): string {
 
   return `${prefix}${"•".repeat(8)}${suffix}`;
 }
+
+/**
+ * Encrypts a customer ID/Passport number using AES-256-GCM.
+ */
+export function encryptIdNumber(plainId: string): string {
+  return encryptSecret(plainId);
+}
+
+/**
+ * Decrypts an encrypted customer ID/Passport number.
+ */
+export function decryptIdNumber(cipherPayload: string): string {
+  return decryptSecret(cipherPayload);
+}

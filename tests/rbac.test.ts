@@ -427,4 +427,85 @@ describe("Prompt 5: Permission-Based RBAC Test Matrix & Security Guards", () => 
       expect(sessionRestored?.permissions).toContain(PERMISSION_KEYS.REPORTS_VIEW);
     });
   });
+
+  // -------------------------------------------------------------
+  // Section 7: HMS & Restaurant Role Matrix Tests
+  // -------------------------------------------------------------
+  describe("HMS & Restaurant Roles: FRONT_DESK, HOUSEKEEPING, KITCHEN, WAITER", () => {
+    const frontDeskContext = { userId: "u-frontdesk", role: ROLES.FRONT_DESK };
+    const housekeepingContext = { userId: "u-housekeeping", role: ROLES.HOUSEKEEPING };
+    const kitchenContext = { userId: "u-kitchen", role: ROLES.KITCHEN };
+    const waiterContext = { userId: "u-waiter", role: ROLES.WAITER };
+
+    it("verifies FRONT_DESK has reservations, check-in/out, guests, folios, and POS", () => {
+      // Allowed
+      expect(can(frontDeskContext, PERMISSION_KEYS.RESERVATIONS_VIEW)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.RESERVATIONS_MANAGE)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.CHECKIN_CHECKOUT)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.GUESTS_VIEW)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.GUESTS_MANAGE)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.FOLIOS_VIEW)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.FOLIOS_MANAGE)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.POS_ACCESS)).toBe(true);
+      expect(can(frontDeskContext, PERMISSION_KEYS.PAYMENTS_RECORD)).toBe(true);
+
+      // Denied
+      expect(can(frontDeskContext, PERMISSION_KEYS.USERS_MANAGE)).toBe(false);
+      expect(can(frontDeskContext, PERMISSION_KEYS.SETTINGS_MANAGE)).toBe(false);
+      expect(can(frontDeskContext, PERMISSION_KEYS.AUDIT_VIEW)).toBe(false);
+      expect(can(frontDeskContext, PERMISSION_KEYS.REPORTS_EXPORT)).toBe(false);
+      expect(can(frontDeskContext, PERMISSION_KEYS.KITCHEN_ORDERS_UPDATE)).toBe(false);
+    });
+
+    it("verifies HOUSEKEEPING can view and update tasks and room status only", () => {
+      // Allowed
+      expect(can(housekeepingContext, PERMISSION_KEYS.HOUSEKEEPING_TASKS_VIEW)).toBe(true);
+      expect(can(housekeepingContext, PERMISSION_KEYS.HOUSEKEEPING_TASKS_UPDATE)).toBe(true);
+      expect(can(housekeepingContext, PERMISSION_KEYS.ROOMS_STATUS_UPDATE)).toBe(true);
+
+      // Denied (Everything else)
+      expect(can(housekeepingContext, PERMISSION_KEYS.RESERVATIONS_VIEW)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.CHECKIN_CHECKOUT)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.GUESTS_VIEW)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.FOLIOS_VIEW)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.POS_ACCESS)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.KITCHEN_ORDERS_VIEW)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.SETTINGS_MANAGE)).toBe(false);
+      expect(can(housekeepingContext, PERMISSION_KEYS.USERS_MANAGE)).toBe(false);
+    });
+
+    it("verifies KITCHEN can view and update kitchen orders only", () => {
+      // Allowed
+      expect(can(kitchenContext, PERMISSION_KEYS.KITCHEN_ORDERS_VIEW)).toBe(true);
+      expect(can(kitchenContext, PERMISSION_KEYS.KITCHEN_ORDERS_UPDATE)).toBe(true);
+
+      // Denied (Everything else)
+      expect(can(kitchenContext, PERMISSION_KEYS.RESTAURANT_ORDERS_CREATE)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.POS_ACCESS)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.ROOMS_STATUS_UPDATE)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.HOUSEKEEPING_TASKS_VIEW)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.RESERVATIONS_VIEW)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.GUESTS_VIEW)).toBe(false);
+      expect(can(kitchenContext, PERMISSION_KEYS.SETTINGS_MANAGE)).toBe(false);
+    });
+
+    it("verifies WAITER can create/view restaurant orders, access POS restaurant, and view ready orders", () => {
+      // Allowed
+      expect(can(waiterContext, PERMISSION_KEYS.RESTAURANT_ORDERS_CREATE)).toBe(true);
+      expect(can(waiterContext, PERMISSION_KEYS.RESTAURANT_ORDERS_VIEW)).toBe(true);
+      expect(can(waiterContext, PERMISSION_KEYS.RESTAURANT_POS_ACCESS)).toBe(true);
+      expect(can(waiterContext, PERMISSION_KEYS.RESTAURANT_READY_ORDERS_VIEW)).toBe(true);
+      expect(can(waiterContext, PERMISSION_KEYS.POS_ACCESS)).toBe(true);
+      expect(can(waiterContext, PERMISSION_KEYS.PAYMENTS_RECORD)).toBe(true);
+
+      // Denied
+      expect(can(waiterContext, PERMISSION_KEYS.KITCHEN_ORDERS_UPDATE)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.ROOMS_STATUS_UPDATE)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.HOUSEKEEPING_TASKS_UPDATE)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.RESERVATIONS_MANAGE)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.CHECKIN_CHECKOUT)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.SETTINGS_MANAGE)).toBe(false);
+      expect(can(waiterContext, PERMISSION_KEYS.USERS_MANAGE)).toBe(false);
+    });
+  });
 });

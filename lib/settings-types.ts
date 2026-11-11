@@ -28,6 +28,13 @@ export type DepositRefundPolicy =
 
 export type SlotIntervalMinutes = 15 | 30 | 60;
 
+export interface TaxSetting {
+  id: string;
+  name: string;
+  percentage: number; // e.g. 15 for 15% VAT, 2.5 for 2.5% NHIL
+  enabled: boolean;
+}
+
 export interface BusinessSettings {
   // 1. Profile
   businessName: string;
@@ -63,6 +70,14 @@ export interface BusinessSettings {
   // 8. Regional Standards (Read-Only)
   currency: typeof STUDIO_CURRENCY;
   timezone: typeof STUDIO_TIMEZONE;
+
+  // 9. HMS & Hotel Extensions
+  hotelName: string;
+  standardCheckInTime: string; // HH:MM e.g. "14:00"
+  standardCheckOutTime: string; // HH:MM e.g. "11:00"
+  freeCancelHoursBeforeCheckIn: number; // e.g. 24
+  cancellationPenaltyPercent: number; // e.g. 50
+  taxes: TaxSetting[]; // Named percentage taxes, toggleable, default empty
 }
 
 export const DEFAULT_OPENING_HOURS: DaySchedule[] = [
@@ -104,4 +119,10 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   smsSenderId: "BeccasCrown",
   currency: STUDIO_CURRENCY,
   timezone: STUDIO_TIMEZONE,
+  hotelName: "Aura Royal Hotel & Restaurant",
+  standardCheckInTime: "14:00",
+  standardCheckOutTime: "11:00",
+  freeCancelHoursBeforeCheckIn: 24,
+  cancellationPenaltyPercent: 50,
+  taxes: [],
 };
