@@ -31,6 +31,8 @@ import {
   CalendarCheck,
   Sparkles,
   Hotel,
+  Utensils,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -332,6 +334,23 @@ export function AppShell({
           icon: <Hotel className="w-4 h-4" />,
           allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER],
           requiredPermission: PERMISSION_KEYS.SETTINGS_MANAGE,
+        },
+      ],
+    },
+    {
+      title: "Restaurant",
+      items: [
+        {
+          label: "Menu & Items",
+          href: "/restaurant/menu",
+          icon: <Utensils className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.WAITER, ROLES.KITCHEN],
+        },
+        {
+          label: "Dining Tables",
+          href: "/restaurant/tables",
+          icon: <QrCode className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.WAITER],
         },
       ],
     },

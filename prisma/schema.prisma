@@ -61,6 +61,7 @@ model User {
   staff                  Staff?
   housekeepingTasksAssigned HousekeepingTask[]   @relation("HousekeepingAssignee")
   folioChargesCreated       FolioCharge[]        @relation("FolioChargeCreator")
+  restaurantOrdersCancelled RestaurantOrder[]    @relation("RestaurantOrderCanceller")
   role                   Role                 @relation(fields: [roleId], references: [id])
 }
 
@@ -715,6 +716,7 @@ model Reservation {
   rooms                  ReservationRoom[]
   extras                 ReservationExtra[]
   folios                 Folio[]
+  restaurantOrders       RestaurantOrder[]
 
   @@index([reference])
   @@index([guestId])
@@ -870,4 +872,180 @@ enum FolioChargeSource {
   EXTRA
   ADJUSTMENT
   PAYMENT
+}
+
+// -------------------------------------------------------------
+// Restaurant Domain Models & Enums
+// -------------------------------------------------------------
+
+enum PrepStation {
+  KITCHEN
+  BAR
+}
+
+enum RestaurantOrderType {
+  DINE_IN
+  ROOM_SERVICE
+  PICKUP
+  WAITER
+}
+
+enum RestaurantOrderStatus {
+  PLACED
+  ACCEPTED
+  PREPARING
+  READY
+  SERVED
+  COMPLETED
+  CANCELLED
+}
+
+enum RestaurantPaymentStatus {
+  PENDING
+  PAID
+  CHARGED_TO_ROOM
+  REFUNDED
+}
+
+model MenuCategory {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  sortOrder   Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       MenuItem[]
+
+  @@index([sortOrder])
+  @@index([isActive])
+}
+
+model MenuItem {
+  id             String                @id @default(uuid())
+  menuCategoryId String
+  name           String
+  description    String?
+  pricePesewas   Int
+  imageUrl       String?
+  isAvailable    Boolean               @default(true)
+  prepStation    PrepStation           @default(KITCHEN)
+  sortOrder      Int                   @default(0)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  category       MenuCategory          @relation(fields: [menuCategoryId], references: [id], onDelete: Cascade)
+  modifierGroups ModifierGroup[]
+  orderItems     RestaurantOrderItem[]
+
+  @@index([menuCategoryId])
+  @@index([isAvailable])
+  @@index([prepStation])
+  @@index([sortOrder])
+}
+
+model ModifierGroup {
+  id         String           @id @default(uuid())
+  menuItemId String?
+  name       String
+  minSelect  Int              @default(0)
+  maxSelect  Int              @default(1)
+  isRequired Boolean          @default(false)
+  sortOrder  Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  menuItem   MenuItem?        @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options    ModifierOption[]
+
+  @@index([menuItemId])
+  @@index([sortOrder])
+}
+
+model ModifierOption {
+  id                String        @id @default(uuid())
+  modifierGroupId   String
+  name              String
+  priceDeltaPesewas Int           @default(0)
+  isAvailable       Boolean       @default(true)
+  sortOrder         Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  modifierGroup     ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@index([modifierGroupId])
+  @@index([isAvailable])
+  @@index([sortOrder])
+}
+
+model RestaurantTable {
+  id        String            @id @default(uuid())
+  label     String            @unique
+  capacity  Int               @default(4)
+  qrToken   String            @unique
+  isActive  Boolean           @default(true)
+  sortOrder Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  orders    RestaurantOrder[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model RestaurantOrder {
+  id                String                  @id @default(uuid())
+  orderNumber       String                  @unique
+  type              RestaurantOrderType     @default(DINE_IN)
+  status            RestaurantOrderStatus   @default(PLACED)
+  tableId           String?
+  reservationId     String?
+  customerName      String?
+  customerPhone     String?
+  notes             String?
+  subtotalPesewas   Int
+  discountPesewas   Int                     @default(0)
+  taxPesewas        Int                     @default(0)
+  totalPesewas      Int
+  paymentStatus     RestaurantPaymentStatus @default(PENDING)
+  placedAt          DateTime                @default(now())
+  acceptedAt        DateTime?
+  preparingAt       DateTime?
+  readyAt           DateTime?
+  servedAt          DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  cancelledByUserId String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  table           RestaurantTable?      @relation(fields: [tableId], references: [id])
+  reservation     Reservation?          @relation(fields: [reservationId], references: [id])
+  cancelledByUser User?                 @relation("RestaurantOrderCanceller", fields: [cancelledByUserId], references: [id])
+  items           RestaurantOrderItem[]
+
+  @@index([status])
+  @@index([tableId])
+  @@index([reservationId])
+  @@index([placedAt])
+}
+
+model RestaurantOrderItem {
+  id                       String          @id @default(uuid())
+  orderId                  String
+  itemId                   String
+  quantity                 Int
+  unitPriceSnapshot        Int
+  selectedModifiersSnapshot Json
+  totalPricePesewas        Int
+  notes                    String?
+  station                  PrepStation     @default(KITCHEN)
+  createdAt                DateTime        @default(now())
+
+  order RestaurantOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item  MenuItem        @relation(fields: [itemId], references: [id])
+
+  @@index([orderId])
+  @@index([itemId])
+  @@index([station])
 }

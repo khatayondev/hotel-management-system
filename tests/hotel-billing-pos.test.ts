@@ -628,3 +628,4 @@ describe("Hotel Billing, Folio Management & POS Room Charge", () => {
     });
   });
 });
+
