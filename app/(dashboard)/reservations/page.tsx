@@ -22,7 +22,11 @@ import {
   LogIn,
   Key,
   ShieldAlert,
+  Receipt,
 } from "lucide-react";
+import { FolioViewerModal } from "@/components/hotel/folio-viewer-modal";
+import { HotelReceiptModal } from "@/components/hotel/hotel-receipt-modal";
+import type { HotelReceiptDetail } from "@/lib/hotel/billing";
 
 export default function ReservationsAdminPage() {
   const [loading, setLoading] = React.useState(true);
@@ -70,6 +74,12 @@ export default function ReservationsAdminPage() {
   // Check-out form states
   const [coOverrideBalance, setCoOverrideBalance] = React.useState(false);
   const [coOverrideReason, setCoOverrideReason] = React.useState("");
+
+  // Folio & Receipt modal states
+  const [folioModalOpen, setFolioModalOpen] = React.useState(false);
+  const [activeFolioId, setActiveFolioId] = React.useState<string | null>(null);
+  const [receiptModalOpen, setReceiptModalOpen] = React.useState(false);
+  const [activeReceipt, setActiveReceipt] = React.useState<HotelReceiptDetail | null>(null);
 
   const [errorMsg, setErrorMsg] = React.useState("");
   const [successMsg, setSuccessMsg] = React.useState("");
@@ -478,6 +488,20 @@ export default function ReservationsAdminPage() {
 
               {/* Operational Action Buttons */}
               <div className="pt-2 flex flex-wrap justify-end gap-2">
+                {selectedRes.folios?.[0]?.id && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setActiveFolioId(selectedRes.folios[0].id);
+                      setFolioModalOpen(true);
+                    }}
+                    className="gap-1.5"
+                  >
+                    <Receipt className="w-4 h-4 text-amber-600" />
+                    <span>Folio & Charges</span>
+                  </Button>
+                )}
+
                 {selectedRes.status !== "CHECKED_IN" && selectedRes.status !== "CHECKED_OUT" && (
                   <Button
                     variant="blackPill"
@@ -750,7 +774,30 @@ export default function ReservationsAdminPage() {
             </form>
           </Dialog>
         )}
+
+        {/* Modal: Folio Viewer */}
+        <FolioViewerModal
+          isOpen={folioModalOpen}
+          onClose={() => setFolioModalOpen(false)}
+          folioId={activeFolioId}
+          onSettleRequested={(folio) => {
+            setFolioModalOpen(false);
+            if (selectedRes) {
+              setCoOverrideBalance(false);
+              setCoOverrideReason("");
+              setCheckOutModalOpen(true);
+            }
+          }}
+        />
+
+        {/* Modal: Hotel Receipt Invoice */}
+        <HotelReceiptModal
+          isOpen={receiptModalOpen}
+          onClose={() => setReceiptModalOpen(false)}
+          receipt={activeReceipt}
+        />
       </div>
     </AppShell>
   );
 }
+

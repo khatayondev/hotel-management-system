@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, FolioChargeSource } from "@prisma/client";
 import { AppError } from "@/lib/api-response";
 import {
   type PermissionContextUser,
   PERMISSION_KEYS,
   requirePermission,
   ROLE_DEFAULT_LIMITS,
+  ROLES,
 } from "@/lib/rbac";
 import { generateNextReceiptNumber } from "./receipt-counter";
 import { normalizeGhanaPhone } from "@/lib/sms";
@@ -172,6 +173,25 @@ export async function processPosCheckout(
   for (const p of input.payments) {
     if (p.amountPesewas < 0) {
       throw new AppError("Payment amount cannot be negative", 400);
+    }
+
+    if (p.method === "CHARGE_TO_ROOM") {
+      const allowedRoles = [
+        ROLES.FRONT_DESK,
+        ROLES.WAITER,
+        ROLES.MANAGER,
+        ROLES.OWNER_ADMIN,
+      ];
+      if (!allowedRoles.includes(cashier.role as (typeof allowedRoles)[number])) {
+        throw new AppError(
+          `Role ${cashier.role} is not authorized to charge to room folios`,
+          403,
+          "FORBIDDEN_CHARGE_TO_ROOM"
+        );
+      }
+      if (!p.folioId) {
+        throw new AppError("Folio ID is required when charging to room", 400);
+      }
     }
 
     let change = 0;
@@ -377,6 +397,36 @@ export async function processPosCheckout(
           paidAt: nowUtc(),
         },
       });
+
+      // If charged to room, post FolioCharge to guest folio
+      const originalPaymentInput = input.payments[i];
+      if (p.method === "CHARGE_TO_ROOM" && originalPaymentInput?.folioId) {
+        const fc = await tx.folioCharge.create({
+          data: {
+            folioId: originalPaymentInput.folioId,
+            description: `Restaurant POS: ${snapshotItems.map((it) => it.serviceName).join(", ")} (${receiptNumber})`,
+            source: FolioChargeSource.RESTAURANT,
+            amountPesewas: p.amountPesewas,
+            referenceId: receiptNumber,
+            createdByUserId: cashier.userId,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: cashier.userId,
+            action: "POS_CHARGE_TO_ROOM",
+            entityType: "FolioCharge",
+            entityId: fc.id,
+            newValues: {
+              folioId: originalPaymentInput.folioId,
+              amountPesewas: p.amountPesewas,
+              receiptNumber,
+              itemCount: snapshotItems.length,
+            },
+          },
+        });
+      }
     }
 
     // E. If promo code applied, increment its usedCount

@@ -1,4 +1,10 @@
-export type PaymentMethod = "CASH" | "MOBILE_MONEY" | "CARD" | "BANK_TRANSFER";
+export type PaymentMethod =
+  | "CASH"
+  | "MOBILE_MONEY"
+  | "CARD"
+  | "BANK_TRANSFER"
+  | "CHARGE_TO_ROOM"
+  | "DEPOSIT_CREDIT";
 
 export interface PosPaymentSplitInput {
   method: PaymentMethod;
@@ -7,6 +13,8 @@ export interface PosPaymentSplitInput {
   reference?: string; // MoMo transaction reference or card auth slip code
   provider?: string; // e.g. "MTN", "TELECEL", "AT", "VISA", "MASTERCARD"
   notes?: string;
+  folioId?: string; // For CHARGE_TO_ROOM
+  roomNumber?: string;
 }
 
 export interface PosItemAddonInput {

@@ -15,6 +15,7 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  BedDouble,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/controls";
@@ -40,6 +41,23 @@ export function CheckoutModal({
 
   // Selected payment mode
   const [activeMethod, setActiveMethod] = React.useState<PaymentMethod | "SPLIT">("CASH");
+
+  // In-House Guest Room Charge State
+  const [selectedGuestFolio, setSelectedGuestFolio] = React.useState<{
+    folioId: string;
+    guestName: string;
+    roomNumber: string;
+    balancePesewas: number;
+  } | null>(null);
+  const [guestSearchQuery, setGuestSearchQuery] = React.useState("");
+  const [inHouseGuests, setInHouseGuests] = React.useState<Array<{
+    folioId: string;
+    guestName: string;
+    roomNumber: string;
+    guestPhone: string;
+    balancePesewas: number;
+  }>>([]);
+  const [loadingGuests, setLoadingGuests] = React.useState(false);
 
   // For scheduled slots: whether paying in full, deposit (50%), or reserving to pay later
   const [coverageType, setCoverageType] = React.useState<"FULL" | "DEPOSIT" | "PAY_LATER">("FULL");
@@ -104,6 +122,31 @@ export function CheckoutModal({
       setCashTenderedGhs((targetCollectionPesewas / 100).toFixed(2));
     }
   }, [targetCollectionPesewas, activeMethod, isOpen]);
+
+  // Load in-house guests when Charge to Room is active
+  React.useEffect(() => {
+    if (isOpen && activeMethod === "CHARGE_TO_ROOM") {
+      let ignore = false;
+      const loadGuests = async () => {
+        try {
+          setLoadingGuests(true);
+          const res = await fetch(`/api/admin/hotel/in-house-guests?query=${encodeURIComponent(guestSearchQuery)}`);
+          const data = await res.json();
+          if (!ignore && res.ok) {
+            setInHouseGuests(data.data?.guests || []);
+          }
+        } catch {
+          // non-blocking
+        } finally {
+          if (!ignore) setLoadingGuests(false);
+        }
+      };
+      loadGuests();
+      return () => {
+        ignore = true;
+      };
+    }
+  }, [isOpen, activeMethod, guestSearchQuery]);
 
   // Cash change math
   const cashTenderedPesewas = Math.max(0, Math.round((parseFloat(cashTenderedGhs) || 0) * 100));
@@ -220,6 +263,20 @@ export function CheckoutModal({
           amountPesewas: targetCollectionPesewas,
           provider: bankName,
           reference: bankRef.trim() || undefined,
+        },
+      ];
+    } else if (activeMethod === "CHARGE_TO_ROOM") {
+      if (!selectedGuestFolio) {
+        setError("Please search and select an in-house guest room to charge.");
+        return;
+      }
+      finalPayments = [
+        {
+          method: "CHARGE_TO_ROOM",
+          amountPesewas: targetCollectionPesewas,
+          folioId: selectedGuestFolio.folioId,
+          roomNumber: selectedGuestFolio.roomNumber,
+          notes: `Charged to Room ${selectedGuestFolio.roomNumber} (${selectedGuestFolio.guestName})`,
         },
       ];
     }
@@ -398,7 +455,7 @@ export function CheckoutModal({
               Select Payment Method
             </Label>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-2xl">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/80 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setActiveMethod("CASH")}
@@ -436,6 +493,19 @@ export function CheckoutModal({
               >
                 <CreditCard className="w-4 h-4" />
                 <span>Card</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveMethod("CHARGE_TO_ROOM")}
+                className={`py-2 px-2 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                  activeMethod === "CHARGE_TO_ROOM"
+                    ? "bg-amber-600 text-white shadow-sm"
+                    : "text-zinc-700 dark:text-zinc-300 hover:bg-white/60 dark:hover:bg-zinc-700"
+                }`}
+              >
+                <BedDouble className="w-4 h-4" />
+                <span>To Room</span>
               </button>
 
               <button
@@ -736,6 +806,103 @@ export function CheckoutModal({
                       className="h-10 text-xs font-mono rounded-xl"
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* CHARGE TO ROOM PANEL */}
+            {activeMethod === "CHARGE_TO_ROOM" && (
+              <div className="p-4 bg-white dark:bg-zinc-900 border-2 border-amber-500/40 rounded-2xl space-y-4 shadow-sm animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-xl">
+                      <BedDouble className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-extrabold text-zinc-900 dark:text-white uppercase tracking-wider">
+                        Charge to Guest Room
+                      </h3>
+                      <p className="text-[11px] text-zinc-500">
+                        Post restaurant dining or room service to an in-house folio
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                    Total: {formatPesewas(targetCollectionPesewas)}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
+                      Search In-House Guest by Room # or Name
+                    </Label>
+                    <Input
+                      type="text"
+                      value={guestSearchQuery}
+                      onChange={(e) => setGuestSearchQuery(e.target.value)}
+                      placeholder="e.g. 101, Kwesi, +23324..."
+                      className="h-10 text-xs rounded-xl"
+                    />
+                  </div>
+
+                  {selectedGuestFolio && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-amber-950 block">
+                          Selected: Room {selectedGuestFolio.roomNumber} — {selectedGuestFolio.guestName}
+                        </span>
+                        <span className="text-[11px] text-amber-800">
+                          Current Folio Balance: {formatPesewas(selectedGuestFolio.balancePesewas)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGuestFolio(null)}
+                        className="text-xs text-amber-900 underline font-semibold cursor-pointer"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+
+                  {!selectedGuestFolio && (
+                    <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl max-h-40 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {loadingGuests ? (
+                        <div className="text-center py-4 text-xs text-zinc-400">Searching in-house guests...</div>
+                      ) : inHouseGuests.length === 0 ? (
+                        <div className="text-center py-4 text-xs text-zinc-400">
+                          No in-house guests found matching your search.
+                        </div>
+                      ) : (
+                        inHouseGuests.map((g) => (
+                          <button
+                            key={g.folioId}
+                            type="button"
+                            onClick={() =>
+                              setSelectedGuestFolio({
+                                folioId: g.folioId,
+                                guestName: g.guestName,
+                                roomNumber: g.roomNumber,
+                                balancePesewas: g.balancePesewas,
+                              })
+                            }
+                            className="w-full text-left p-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 flex justify-between items-center text-xs transition-colors cursor-pointer"
+                          >
+                            <div>
+                              <span className="font-bold text-zinc-900 dark:text-white">
+                                Room {g.roomNumber}
+                              </span>
+                              <span className="text-zinc-500 block text-[11px]">{g.guestName}</span>
+                            </div>
+                            <span className="font-mono text-zinc-700 dark:text-zinc-300 text-[11px]">
+                              Bal: {formatPesewas(g.balancePesewas)}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
