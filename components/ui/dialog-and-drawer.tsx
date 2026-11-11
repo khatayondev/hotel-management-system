@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
 interface DialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description?: string;
   children: React.ReactNode;
@@ -16,20 +18,28 @@ interface DialogProps {
 
 export function Dialog({
   isOpen,
+  open,
   onClose,
+  onOpenChange,
   title,
   description,
   children,
   footer,
 }: DialogProps) {
-  if (!isOpen) return null;
+  const visible = isOpen !== undefined ? isOpen : !!open;
+  if (!visible) return null;
+
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
 
@@ -49,7 +59,7 @@ export function Dialog({
           <Button
             variant="circularIcon"
             size="iconSm"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close dialog"
           >
             <X className="w-4 h-4" />

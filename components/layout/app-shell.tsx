@@ -27,6 +27,10 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  BedDouble,
+  CalendarCheck,
+  Sparkles,
+  Hotel,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -298,6 +302,39 @@ export function AppShell({
   };
 
   const navSections: NavSection[] = [
+    {
+      title: "Hotel Operations",
+      items: [
+        {
+          label: "Reservations",
+          href: "/dashboard/reservations",
+          icon: <CalendarCheck className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK],
+          requiredPermission: PERMISSION_KEYS.RESERVATIONS_VIEW,
+        },
+        {
+          label: "Tape Chart",
+          href: "/dashboard/calendar",
+          icon: <BedDouble className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK],
+          requiredPermission: PERMISSION_KEYS.RESERVATIONS_VIEW,
+        },
+        {
+          label: "Housekeeping",
+          href: "/dashboard/housekeeping",
+          icon: <Sparkles className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.HOUSEKEEPING],
+          requiredPermission: PERMISSION_KEYS.HOUSEKEEPING_TASKS_VIEW,
+        },
+        {
+          label: "Rooms & Rates",
+          href: "/dashboard/rooms",
+          icon: <Hotel className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER],
+          requiredPermission: PERMISSION_KEYS.SETTINGS_MANAGE,
+        },
+      ],
+    },
     {
       title: "Core",
       items: [

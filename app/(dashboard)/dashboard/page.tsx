@@ -27,6 +27,12 @@ import {
   AlertCircle,
   ExternalLink,
   CreditCard,
+  BedDouble,
+  Hotel,
+  LogIn,
+  LogOut,
+  Sparkles,
+  Users,
 } from "lucide-react";
 import { formatPesewas } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -118,6 +124,7 @@ interface DashboardData {
 
 export default function DashboardOverviewPage() {
   const [data, setData] = React.useState<DashboardData | null>(null);
+  const [hotelKpis, setHotelKpis] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [notification, setNotification] = React.useState<{ type: "success" | "error"; message: string } | null>(null);
 
@@ -161,6 +168,14 @@ export default function DashboardOverviewPage() {
   // Initial load on mount
   React.useEffect(() => {
     loadDashboard(false);
+    fetch("/api/admin/hotel/kpis")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.kpis) {
+          setHotelKpis(json.data.kpis);
+        }
+      })
+      .catch(() => {});
   }, [loadDashboard]);
 
   // Smart SWR Polling (1 min interval + focus revalidation + visibility pause)
@@ -317,10 +332,10 @@ export default function DashboardOverviewPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-zinc-950 tracking-tight">
-              Studio Operations
+              Hotel & Studio Operations
             </h1>
             <p className="text-xs text-zinc-500">
-              Live schedule, revenue metrics, and walk-in client activities
+              Live room occupancy, daily arrivals/departures, and guest folios
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -329,6 +344,122 @@ export default function DashboardOverviewPage() {
               lastRefreshedAt={lastRefreshedAt}
               onRefresh={refresh}
             />
+          </div>
+        </div>
+
+        {/* HOTEL OPERATIONS COMMAND CENTER & KPIS */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Hotel className="w-5 h-5 text-amber-500" />
+              <h2 className="text-base font-black text-zinc-950 tracking-tight">
+                Hotel Operations KPIs
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link href="/dashboard/reservations">
+                <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Reservations</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/calendar">
+                <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-1">
+                  <BedDouble className="w-3.5 h-3.5" />
+                  <span>Tape Chart</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/housekeeping">
+                <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-1">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Housekeeping</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/rooms">
+                <Button variant="outline" size="sm" className="h-8 text-xs font-bold gap-1">
+                  <Hotel className="w-3.5 h-3.5" />
+                  <span>Rooms Admin</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {/* Arrivals Today */}
+            <Link href="/dashboard/reservations?status=CONFIRMED" className="group">
+              <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-emerald-400 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                    Arrivals Today
+                  </span>
+                  <LogIn className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <div className="text-2xl font-black text-emerald-900">
+                  {hotelKpis ? hotelKpis.arrivalsTodayCount : "—"}
+                </div>
+              </div>
+            </Link>
+
+            {/* Departures Today */}
+            <Link href="/dashboard/reservations?status=CHECKED_IN" className="group">
+              <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-blue-400 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                    Departures Today
+                  </span>
+                  <LogOut className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <div className="text-2xl font-black text-blue-900">
+                  {hotelKpis ? hotelKpis.departuresTodayCount : "—"}
+                </div>
+              </div>
+            </Link>
+
+            {/* In-House Guests */}
+            <Link href="/dashboard/reservations?status=CHECKED_IN" className="group">
+              <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-purple-400 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                    In-House Guests
+                  </span>
+                  <Users className="w-3.5 h-3.5 text-purple-600" />
+                </div>
+                <div className="text-2xl font-black text-purple-900">
+                  {hotelKpis ? hotelKpis.inHouseGuestsCount : "—"}
+                </div>
+              </div>
+            </Link>
+
+            {/* Occupancy % */}
+            <Link href="/dashboard/calendar" className="group">
+              <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-amber-400 hover:shadow-sm transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                    Occupancy Rate
+                  </span>
+                  <span className="text-[10px] font-bold text-neutral-500">
+                    {hotelKpis ? `${hotelKpis.occupiedRoomsCount}/${hotelKpis.operationalRoomsCount}` : ""}
+                  </span>
+                </div>
+                <div className="text-2xl font-black text-amber-900">
+                  {hotelKpis ? `${hotelKpis.occupancyPercent}%` : "—"}
+                </div>
+              </div>
+            </Link>
+
+            {/* Rooms By Status */}
+            <Link href="/dashboard/housekeeping" className="group">
+              <div className="p-3.5 rounded-2xl bg-white border border-black/10 shadow-xs space-y-1 hover:border-neutral-400 hover:shadow-sm transition-all">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 block">
+                  Rooms By Status
+                </span>
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <span className="text-emerald-700 font-bold" title="Clean">{hotelKpis?.roomsByStatus?.CLEAN ?? 0} Clean</span>
+                  <span className="text-amber-700 font-bold" title="Dirty">{hotelKpis?.roomsByStatus?.DIRTY ?? 0} Dirty</span>
+                  <span className="text-blue-700 font-bold" title="Occupied">{hotelKpis?.roomsByStatus?.OCCUPIED ?? 0} Occ</span>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 
