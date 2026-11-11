@@ -451,7 +451,7 @@ export async function saveSettings(
 
     // Write audit log entry (sanitizing secret keys)
     const sanitizedChanges = { ...parsed };
-    const userRecord = user.id ? await tx.user.findUnique({ where: { id: user.id } }) : null;
+    const userRecord = user?.id ? await tx.user.findUnique({ where: { id: user.id } }) : null;
 
     await tx.auditLog.create({
       data: {
@@ -463,5 +463,5 @@ export async function saveSettings(
     });
   });
 
-  return getSettings({ requesterRole: user.role });
+  return getSettings({ requesterRole: user?.role });
 }
