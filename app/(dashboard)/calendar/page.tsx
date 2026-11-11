@@ -19,14 +19,15 @@ import {
 
 export default function TapeChartCalendarPage() {
   const [loading, setLoading] = React.useState(true);
-  const [startDate, setStartDate] = React.useState(() => {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
-  });
+  const [startDate, setStartDate] = React.useState("");
   const [days, setDays] = React.useState(14);
   const [dateColumns, setDateColumns] = React.useState<string[]>([]);
   const [rooms, setRooms] = React.useState<any[]>([]);
   const [reservationRooms, setReservationRooms] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    setStartDate(new Date().toISOString().slice(0, 10));
+  }, []);
 
   // Move/extend modal
   const [moveModalOpen, setMoveModalOpen] = React.useState(false);

@@ -284,6 +284,52 @@ export async function reconcilePaymentTransaction(
         }
       }
 
+      // 4c. Update associated Restaurant Order if attached
+      const matchingRestaurantOrder = await tx.restaurantOrder.findFirst({
+        where: {
+          OR: [
+            { paystackReference: reference },
+            { orderNumber: reference },
+          ],
+        },
+      });
+
+      if (matchingRestaurantOrder) {
+        // Promote paymentStatus to PAID
+        // If it was PLACED, promote to ACCEPTED so it reaches the kitchen
+        let nextStatus = matchingRestaurantOrder.status;
+        let acceptedAt = matchingRestaurantOrder.acceptedAt;
+        if (matchingRestaurantOrder.status === "PLACED") {
+          nextStatus = "ACCEPTED";
+          acceptedAt = new Date();
+        }
+
+        await tx.restaurantOrder.update({
+          where: { id: matchingRestaurantOrder.id },
+          data: {
+            paymentStatus: "PAID",
+            status: nextStatus,
+            acceptedAt,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: auditUserId || null,
+            action: "RESTAURANT_ORDER_PAID",
+            entityType: "RestaurantOrder",
+            entityId: matchingRestaurantOrder.id,
+            newValues: {
+              orderNumber: matchingRestaurantOrder.orderNumber,
+              paymentStatus: "PAID",
+              status: nextStatus,
+              providerReference: reference,
+              amountPesewas: payment.amountPesewas,
+            },
+          },
+        });
+      }
+
       // 5. Release any active hold for this reference/booking
       await tx.slotHold.deleteMany({
         where: { token: reference },

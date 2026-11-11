@@ -79,8 +79,10 @@ export function Dialog({
 }
 
 interface DrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  open?: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   children: React.ReactNode;
   side?: "bottom" | "left" | "right";
@@ -89,13 +91,21 @@ interface DrawerProps {
 
 export function Drawer({
   isOpen,
+  open,
   onClose,
+  onOpenChange,
   title,
   children,
   side = "bottom",
   className,
 }: DrawerProps) {
-  if (!isOpen) return null;
+  const visible = isOpen !== undefined ? isOpen : !!open;
+  if (!visible) return null;
+
+  const handleClose = () => {
+    onClose?.();
+    onOpenChange?.(false);
+  };
 
   const sideStyles = {
     bottom: "bottom-0 inset-x-0 rounded-t-3xl max-h-[85vh]",
@@ -109,7 +119,7 @@ export function Drawer({
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs"
-        onClick={onClose}
+        onClick={handleClose}
         aria-hidden="true"
       />
       <div
@@ -126,7 +136,7 @@ export function Drawer({
           <Button
             variant="circularIcon"
             size="iconSm"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close drawer"
             className={isDark ? "bg-zinc-900 hover:bg-zinc-800 text-white border-white/10" : undefined}
           >

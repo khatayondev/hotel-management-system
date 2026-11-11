@@ -995,6 +995,8 @@ model RestaurantTable {
 model RestaurantOrder {
   id                String                  @id @default(uuid())
   orderNumber       String                  @unique
+  trackingToken     String                  @unique @default(uuid())
+  paystackReference String?                 @unique
   type              RestaurantOrderType     @default(DINE_IN)
   status            RestaurantOrderStatus   @default(PLACED)
   tableId           String?
@@ -1028,6 +1030,8 @@ model RestaurantOrder {
   @@index([tableId])
   @@index([reservationId])
   @@index([placedAt])
+  @@index([trackingToken])
+  @@index([paystackReference])
 }
 
 model RestaurantOrderItem {

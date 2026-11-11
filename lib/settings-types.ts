@@ -78,6 +78,10 @@ export interface BusinessSettings {
   freeCancelHoursBeforeCheckIn: number; // e.g. 24
   cancellationPenaltyPercent: number; // e.g. 50
   taxes: TaxSetting[]; // Named percentage taxes, toggleable, default empty
+
+  // 10. Restaurant Opening Hours
+  restaurantOpenTime: string; // HH:MM e.g. "07:00"
+  restaurantCloseTime: string; // HH:MM e.g. "22:00"
 }
 
 export const DEFAULT_OPENING_HOURS: DaySchedule[] = [
@@ -125,4 +129,6 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   freeCancelHoursBeforeCheckIn: 24,
   cancellationPenaltyPercent: 50,
   taxes: [],
+  restaurantOpenTime: "07:00",
+  restaurantCloseTime: "22:00",
 };

@@ -96,10 +96,17 @@ function getThreeDaysDateStr(): string {
 export default function HotelHomePage() {
   const router = useRouter();
 
-  const [checkIn, setCheckIn] = React.useState<string>(getTomorrowDateStr());
-  const [checkOut, setCheckOut] = React.useState<string>(getThreeDaysDateStr());
+  const [todayStr, setTodayStr] = React.useState<string>("");
+  const [checkIn, setCheckIn] = React.useState<string>("");
+  const [checkOut, setCheckOut] = React.useState<string>("");
   const [adults, setAdults] = React.useState<number>(2);
   const [children, setChildren] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    setTodayStr(new Date().toISOString().slice(0, 10));
+    setCheckIn(getTomorrowDateStr());
+    setCheckOut(getThreeDaysDateStr());
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +165,7 @@ export default function HotelHomePage() {
                 <input
                   type="date"
                   value={checkIn}
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={todayStr}
                   onChange={(e) => setCheckIn(e.target.value)}
                   className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
                   required
@@ -172,7 +179,7 @@ export default function HotelHomePage() {
                 <input
                   type="date"
                   value={checkOut}
-                  min={checkIn || new Date().toISOString().slice(0, 10)}
+                  min={checkIn || todayStr}
                   onChange={(e) => setCheckOut(e.target.value)}
                   className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
                   required

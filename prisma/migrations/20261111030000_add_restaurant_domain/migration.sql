@@ -226,3 +226,4 @@ ALTER TABLE "RestaurantOrderItem" ADD CONSTRAINT "RestaurantOrderItem_orderId_fk
 
 -- AddForeignKey
 ALTER TABLE "RestaurantOrderItem" ADD CONSTRAINT "RestaurantOrderItem_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "MenuItem"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+

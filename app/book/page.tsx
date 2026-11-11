@@ -88,6 +88,20 @@ function getThreeDaysDateStr(): string {
 }
 
 export default function HotelBookingPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen py-24 text-center text-muted-foreground flex items-center justify-center">
+          Loading booking wizard...
+        </div>
+      }
+    >
+      <HotelBookingContent />
+    </React.Suspense>
+  );
+}
+
+function HotelBookingContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -96,11 +110,16 @@ export default function HotelBookingPage() {
 
   // Search/Stay inputs
   const [checkIn, setCheckIn] = React.useState<string>(
-    searchParams.get("checkIn") || getTomorrowDateStr()
+    searchParams.get("checkIn") || ""
   );
   const [checkOut, setCheckOut] = React.useState<string>(
-    searchParams.get("checkOut") || getThreeDaysDateStr()
+    searchParams.get("checkOut") || ""
   );
+
+  React.useEffect(() => {
+    if (!checkIn) setCheckIn(getTomorrowDateStr());
+    if (!checkOut) setCheckOut(getThreeDaysDateStr());
+  }, [checkIn, checkOut]);
   const [adults, setAdults] = React.useState<number>(
     Number.parseInt(searchParams.get("adults") || "1", 10)
   );

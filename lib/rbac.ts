@@ -211,6 +211,8 @@ export interface PermissionContextUser {
   role: UserRole;
   staffId?: string | null;
   permissions?: PermissionKey[];
+  name?: string;
+  email?: string;
 }
 
 export interface ResourceContext {

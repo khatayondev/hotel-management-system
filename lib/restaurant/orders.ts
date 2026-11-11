@@ -10,6 +10,9 @@ import {
 import { generateNextReceiptNumber } from "../pos/receipt-counter";
 import { formatPesewas } from "../money";
 import { ROLES, type PermissionContextUser } from "../rbac";
+import { getSettings, isRestaurantOpen } from "../settings";
+import { sendSms } from "../sms";
+import { logger } from "../logger";
 
 // -------------------------------------------------------------
 // State Machine Transitions
@@ -90,6 +93,10 @@ export interface CreateRestaurantOrderInput {
   notes?: string;
   items: CreateOrderItemInput[];
   user?: PermissionContextUser;
+  paymentStatus?: RestaurantPaymentStatus;
+  paystackReference?: string;
+  skipOpeningHoursCheck?: boolean;
+  now?: Date;
 }
 
 export interface UpdateOrderStatusInput {
@@ -128,6 +135,24 @@ export async function createRestaurantOrder(
   }
 
   const { type, tableId, reservationId, customerName, customerPhone, notes, items } = input;
+
+  // 0. Verify restaurant opening hours
+  // Opening hours are enforced on public guest orders, or when a specific timestamp (input.now) is provided/tested.
+  // Internal staff on duty (WAITER, FRONT_DESK, MANAGER, OWNER_ADMIN) can place POS/service orders anytime unless explicitly testing hours.
+  const isGuestOrPublic = !user.role || (user.role as string) === "GUEST";
+  const shouldCheckHours = !input.skipOpeningHoursCheck && (Boolean(input.now) || isGuestOrPublic);
+
+  if (shouldCheckHours) {
+    const settings = await getSettings();
+    const { isOpen, openTime, closeTime } = isRestaurantOpen(settings, input.now || new Date());
+    if (!isOpen) {
+      throw new AppError(
+        `The restaurant is currently closed. Opening hours are ${openTime} to ${closeTime}.`,
+        400,
+        "RESTAURANT_CLOSED"
+      );
+    }
+  }
 
   if (!items || items.length === 0) {
     throw new AppError("Order must contain at least one item", 400, "EMPTY_ORDER");
@@ -270,9 +295,15 @@ export async function createRestaurantOrder(
   const order = await prisma.$transaction(async (tx) => {
     const orderNumber = await generateNextReceiptNumber(tx, prefix);
 
+    let initialPaymentStatus = input.paymentStatus || RestaurantPaymentStatus.PENDING;
+    if (type === RestaurantOrderType.ROOM_SERVICE) {
+      initialPaymentStatus = RestaurantPaymentStatus.CHARGED_TO_ROOM;
+    }
+
     const created = await tx.restaurantOrder.create({
       data: {
         orderNumber,
+        paystackReference: input.paystackReference || null,
         type,
         status: RestaurantOrderStatus.PLACED,
         tableId: tableId || null,
@@ -284,7 +315,7 @@ export async function createRestaurantOrder(
         discountPesewas,
         taxPesewas,
         totalPesewas,
-        paymentStatus: RestaurantPaymentStatus.PENDING,
+        paymentStatus: initialPaymentStatus,
         items: {
           create: processedOrderItems.map((poi) => ({
             itemId: poi.itemId,
@@ -306,6 +337,48 @@ export async function createRestaurantOrder(
         table: true,
       },
     });
+
+    // If ROOM_SERVICE, post folio charge to the guest's folio
+    if (type === RestaurantOrderType.ROOM_SERVICE && reservationId) {
+      let folio = await tx.folio.findFirst({
+        where: { reservationId, status: "OPEN" },
+      });
+
+      if (!folio) {
+        const res = await tx.reservation.findUnique({
+          where: { id: reservationId },
+          select: { reference: true },
+        });
+        const folioNumber = `FOL-${res?.reference || Date.now()}`;
+        folio = await tx.folio.create({
+          data: { reservationId, folioNumber, status: "OPEN" },
+        });
+      }
+
+      await tx.folioCharge.create({
+        data: {
+          folioId: folio.id,
+          description: `Room Service: ${orderNumber}${customerName ? ` (${customerName})` : ""}`,
+          amountPesewas: totalPesewas,
+          source: "RESTAURANT",
+          createdByUserId: user.userId && user.userId !== "guest" ? user.userId : null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: user.userId && user.userId !== "guest" ? user.userId : null,
+          action: "FOLIO_CHARGE_POSTED",
+          entityType: "Folio",
+          entityId: folio.id,
+          newValues: {
+            orderNumber,
+            amountPesewas: totalPesewas,
+            source: "RESTAURANT",
+          },
+        },
+      });
+    }
 
     // Audit log
     await tx.auditLog.create({
@@ -434,6 +507,24 @@ export async function updateOrderStatus(
     return res;
   });
 
+  // Send SMS notification when order is READY
+  if (newStatus === RestaurantOrderStatus.READY && updated.customerPhone) {
+    try {
+      const msg =
+        updated.type === RestaurantOrderType.ROOM_SERVICE
+          ? `Aura Royal Hotel: Your room service order (${updated.orderNumber}) is READY and on its way to your room!`
+          : `Aura Royal Hotel: Your order (${updated.orderNumber}) is READY for pickup! Please collect it at the counter.`;
+
+      await sendSms({
+        recipient: updated.customerPhone,
+        message: msg,
+        senderId: "AuraHotel",
+      });
+    } catch (err) {
+      logger.warn(`Failed to dispatch READY SMS for order ${updated.orderNumber}: ${err}`);
+    }
+  }
+
   return updated;
 }
 
@@ -560,29 +651,41 @@ export async function getRestaurantOrders(filters?: {
   tableId?: string;
   station?: PrepStation;
   search?: string;
+  isKitchenView?: boolean;
 }) {
+  const where: Prisma.RestaurantOrderWhereInput = {
+    ...(filters?.status ? { status: filters.status } : {}),
+    ...(filters?.type ? { type: filters.type } : {}),
+    ...(filters?.tableId ? { tableId: filters.tableId } : {}),
+    ...(filters?.station
+      ? {
+          items: {
+            some: { station: filters.station },
+          },
+        }
+      : {}),
+    ...(filters?.search
+      ? {
+          OR: [
+            { orderNumber: { contains: filters.search, mode: "insensitive" } },
+            { customerName: { contains: filters.search, mode: "insensitive" } },
+            { table: { label: { contains: filters.search, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
+
+  // Payment-before-kitchen rule:
+  // For kitchen/bar views, pickup orders that have NOT yet been paid do not appear on station queues
+  if (filters?.station || filters?.isKitchenView) {
+    where.NOT = {
+      type: RestaurantOrderType.PICKUP,
+      paymentStatus: { not: RestaurantPaymentStatus.PAID },
+    };
+  }
+
   return prisma.restaurantOrder.findMany({
-    where: {
-      ...(filters?.status ? { status: filters.status } : {}),
-      ...(filters?.type ? { type: filters.type } : {}),
-      ...(filters?.tableId ? { tableId: filters.tableId } : {}),
-      ...(filters?.station
-        ? {
-            items: {
-              some: { station: filters.station },
-            },
-          }
-        : {}),
-      ...(filters?.search
-        ? {
-            OR: [
-              { orderNumber: { contains: filters.search, mode: "insensitive" } },
-              { customerName: { contains: filters.search, mode: "insensitive" } },
-              { table: { label: { contains: filters.search, mode: "insensitive" } } },
-            ],
-          }
-        : {}),
-    },
+    where,
     include: {
       items: {
         include: {
@@ -622,4 +725,32 @@ export async function getRestaurantOrderById(orderId: string) {
       },
     },
   });
+}
+
+export async function getOrderByTrackingToken(token: string) {
+  const order = await prisma.restaurantOrder.findFirst({
+    where: {
+      OR: [
+        { trackingToken: token },
+        { id: token },
+        { orderNumber: token },
+      ],
+    },
+    include: {
+      items: {
+        include: {
+          item: true,
+        },
+      },
+      table: true,
+      reservation: {
+        include: {
+          rooms: { include: { room: true } },
+          guest: true,
+        },
+      },
+    },
+  });
+
+  return order;
 }

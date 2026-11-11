@@ -96,6 +96,16 @@ export const updateSettingsSchema = z.object({
       })
     )
     .optional(),
+
+  // Restaurant Opening Hours
+  restaurantOpenTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid restaurant open time (HH:MM)")
+    .optional(),
+  restaurantCloseTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid restaurant close time (HH:MM)")
+    .optional(),
 });
 
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
@@ -227,6 +237,12 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
     }
   }
 
+  const restaurantOpenTime =
+    map.get("restaurant_open_time") || DEFAULT_BUSINESS_SETTINGS.restaurantOpenTime;
+
+  const restaurantCloseTime =
+    map.get("restaurant_close_time") || DEFAULT_BUSINESS_SETTINGS.restaurantCloseTime;
+
   return {
     businessName,
     businessLogo,
@@ -253,6 +269,8 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
     freeCancelHoursBeforeCheckIn,
     cancellationPenaltyPercent,
     taxes,
+    restaurantOpenTime,
+    restaurantCloseTime,
   };
 }
 
@@ -438,6 +456,20 @@ export async function saveSettings(
       description: "Named toggleable percentage taxes",
     });
   }
+  if (parsed.restaurantOpenTime !== undefined) {
+    entriesToUpsert.push({
+      key: "restaurant_open_time",
+      value: parsed.restaurantOpenTime,
+      description: "Restaurant daily opening time (HH:MM)",
+    });
+  }
+  if (parsed.restaurantCloseTime !== undefined) {
+    entriesToUpsert.push({
+      key: "restaurant_close_time",
+      value: parsed.restaurantCloseTime,
+      description: "Restaurant daily closing time (HH:MM)",
+    });
+  }
 
   // Persist all updated settings inside a transaction
   await prisma.$transaction(async (tx) => {
@@ -464,4 +496,49 @@ export async function saveSettings(
   });
 
   return getSettings({ requesterRole: user?.role });
+}
+
+/**
+ * Evaluates whether the restaurant is currently open based on configured restaurant hours.
+ * Default hours: 07:00 to 22:00 in Africa/Accra timezone (UTC+0).
+ */
+export function isRestaurantOpen(
+  settings?: Pick<BusinessSettings, "restaurantOpenTime" | "restaurantCloseTime">,
+  now = new Date()
+): { isOpen: boolean; openTime: string; closeTime: string } {
+  const openTime = settings?.restaurantOpenTime || DEFAULT_BUSINESS_SETTINGS.restaurantOpenTime;
+  const closeTime = settings?.restaurantCloseTime || DEFAULT_BUSINESS_SETTINGS.restaurantCloseTime;
+
+  // Format current time in Africa/Accra (UTC+0)
+  const timeFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: STUDIO_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const currentTimeStr = timeFormatter.format(now);
+  const [curH, curM] = currentTimeStr.split(":").map(Number);
+  const curMinutes = curH * 60 + curM;
+
+  const [openH, openM] = openTime.split(":").map(Number);
+  const openMinutes = openH * 60 + openM;
+
+  const [closeH, closeM] = closeTime.split(":").map(Number);
+  const closeMinutes = closeH * 60 + closeM;
+
+  let isOpen = false;
+  if (openMinutes <= closeMinutes) {
+    // Normal daytime hours (e.g., 07:00 to 22:00)
+    isOpen = curMinutes >= openMinutes && curMinutes < closeMinutes;
+  } else {
+    // Overnight hours (e.g., 18:00 to 02:00)
+    isOpen = curMinutes >= openMinutes || curMinutes < closeMinutes;
+  }
+
+  return {
+    isOpen,
+    openTime,
+    closeTime,
+  };
 }
