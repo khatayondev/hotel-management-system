@@ -6,10 +6,15 @@ import { getPaymentProvider } from "@/lib/payments/provider";
 import { successResponse, errorResponse, handleRouteError } from "@/lib/api-response";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
-const initializeSchema = z.object({
-  bookingId: z.string().uuid("Invalid booking ID"),
-  paymentType: z.enum(["DEPOSIT", "FULL", "BALANCE"]).default("DEPOSIT"),
-});
+const initializeSchema = z
+  .object({
+    bookingId: z.string().uuid("Invalid booking ID").optional(),
+    reservationId: z.string().uuid("Invalid reservation ID").optional(),
+    paymentType: z.enum(["DEPOSIT", "FULL", "BALANCE"]).default("DEPOSIT"),
+  })
+  .refine((data) => Boolean(data.bookingId || data.reservationId), {
+    message: "Either bookingId or reservationId must be provided",
+  });
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +31,80 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { bookingId, paymentType } = parsed.data;
+    const { bookingId, reservationId, paymentType } = parsed.data;
+
+    // A. Hotel Reservation Flow
+    if (reservationId) {
+      const reservation = await prisma.reservation.findUnique({
+        where: { id: reservationId },
+        include: { guest: true },
+      });
+
+      if (!reservation) {
+        return errorResponse("Reservation not found", "NOT_FOUND", 404);
+      }
+
+      let amountToPayPesewas = 0;
+      if (paymentType === "DEPOSIT") {
+        amountToPayPesewas = reservation.depositRequiredPesewas;
+      } else if (paymentType === "FULL") {
+        amountToPayPesewas = reservation.totalPesewas;
+      } else if (paymentType === "BALANCE") {
+        amountToPayPesewas = Math.max(0, reservation.totalPesewas - reservation.amountPaidPesewas);
+        if (amountToPayPesewas === 0) {
+          return errorResponse("This reservation is already fully paid", "BAD_REQUEST", 400);
+        }
+      }
+
+      const uniqueRef = `PAY-HOTEL-${Date.now().toString().slice(-6)}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+      const payment = await prisma.payment.create({
+        data: {
+          bookingId: null,
+          reference: uniqueRef,
+          amountPesewas: amountToPayPesewas,
+          currency: "GHS",
+          status: "PENDING",
+          channel: "MOBILE_MONEY",
+        },
+      });
+
+      const provider = getPaymentProvider();
+      const guestEmail = reservation.guest.email || `guest-${reservation.guest.phone.replace("+", "")}@hotel.gh`;
+
+      const initResult = await provider.initialize({
+        reference: uniqueRef,
+        amountPesewas: amountToPayPesewas,
+        email: guestEmail,
+        currency: "GHS",
+        channels: ["card", "mobile_money"],
+        callbackUrl: `${req.nextUrl.origin}/booking/confirmation?ref=${uniqueRef}`,
+        metadata: {
+          reservationId: reservation.id,
+          reservationReference: reservation.reference,
+          paymentId: payment.id,
+          paymentType,
+          customerPhone: reservation.guest.phone,
+        },
+      });
+
+      return successResponse(
+        {
+          authorizationUrl: initResult.authorizationUrl,
+          accessCode: initResult.accessCode,
+          reference: initResult.reference,
+          amountPesewas: amountToPayPesewas,
+          paymentType,
+        },
+        "Payment session initialized",
+        201
+      );
+    }
+
+    // B. Legacy Studio Booking Flow
+    if (!bookingId) {
+      return errorResponse("Booking ID is required", "BAD_REQUEST", 400);
+    }
 
     // 1. Fetch booking with customer
     const booking = await prisma.booking.findUnique({

@@ -17,52 +17,44 @@ interface SearchItem {
 
 const SIGNATURE_TREATMENTS_FALLBACK: SearchItem[] = [
   {
-    id: "2b5d4b8d-2578-43bb-b003-a98c98cfe2b5",
-    title: "Full Frontal Lace Installation",
-    category: "HAIR & INSTALLS",
-    rate: "GH₵ 160.00",
-    duration: "90 min",
-    description: "Bleaching of knots, hairline customization, melting band press & precision sleek styling.",
+    id: "deluxe-king-suite",
+    title: "Deluxe King Suite",
+    category: "SUITES & ROOMS",
+    rate: "GH₵ 1,200.00",
+    duration: "1 King Bed",
+    description: "Spacious master bedroom with marble en-suite bathroom, rain shower, and private balcony.",
   },
   {
-    id: "d50e6584-a25e-4f8b-b7e7-0168aaa88fa4",
-    title: "Bridal Soft Glam Makeup",
-    category: "BRIDAL GLAM",
-    rate: "GH₵ 550.00",
-    duration: "90 min",
-    description: "Camera-ready HD soft contour, skin glaze prep, handcrafted lash fan & 24hr sealing setting spray.",
+    id: "executive-panoramic-suite",
+    title: "Executive Panoramic Suite",
+    category: "SUITES & ROOMS",
+    rate: "GH₵ 2,200.00",
+    duration: "1 Super King Bed",
+    description: "Floor-to-ceiling city views, executive work desk, living lounge, and complimentary mini-bar.",
   },
   {
-    id: "df8ee128-8912-4ac5-84bf-85aac75b5686",
-    title: "Mega Volume Russian Lashes",
-    category: "LASHES",
-    rate: "GH₵ 280.00",
-    duration: "90 min",
-    description: "Multi-dimensional fluffy volume fans custom mapped to your natural eye shape for supreme drama.",
+    id: "royal-presidential-penthouse",
+    title: "Royal Presidential Penthouse",
+    category: "PENTHOUSE",
+    rate: "GH₵ 5,500.00",
+    duration: "2 Master Suites",
+    description: "Private rooftop terrace, personal butler service, dedicated jacuzzi, and chef kitchenette.",
   },
   {
-    id: "c0292917-7f05-4de9-956e-41130a586b7f",
-    title: "Luxury Jelly Spa Pedicure",
-    category: "PEDICURE & SPA",
-    rate: "GH₵ 160.00",
-    duration: "90 min",
-    description: "Gelatinous thermal soak, callus peel, sugar polish scrub, foot massage and gel color finish.",
-  },
-  {
-    id: "99436d01-56bb-4e23-abce-550f91af5e5a",
-    title: "Frontal Sleek High Pony",
-    category: "HAIR & INSTALLS",
-    rate: "GH₵ 200.00",
-    duration: "150 min",
-    description: "High tension sculpted sleek ponytail with customized ear-to-ear lace frontal melting.",
-  },
-  {
-    id: "07850cc7-ffd1-44f1-9988-874726bc9c7b",
-    title: "Goddess Knotless Braids",
-    category: "HAIR & INSTALLS",
+    id: "airport-chauffeur",
+    title: "Airport VIP Chauffeur Transfer",
+    category: "HOTEL EXTRAS",
     rate: "GH₵ 350.00",
-    duration: "180 min",
-    description: "Pain-free root feeding with human hair curls woven throughout for a full, lightweight silhouette.",
+    duration: "One-Way / Return",
+    description: "Private Mercedes-Benz E-Class executive pickup directly from Kotoka International Airport.",
+  },
+  {
+    id: "champagne-breakfast",
+    title: "Daily Champagne Breakfast",
+    category: "DINING",
+    rate: "GH₵ 180.00",
+    duration: "Per Guest / Day",
+    description: "Freshly prepared artisan hot breakfast with mimosa station and barista coffee.",
   },
 ];
 
@@ -76,25 +68,20 @@ export function PublicNavbar() {
   const [catalogItems, setCatalogItems] = React.useState<SearchItem[]>(SIGNATURE_TREATMENTS_FALLBACK);
   const searchContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Load public catalog to power smart live search
+  // Load public rooms to power smart live search
   React.useEffect(() => {
-    fetch("/api/catalog")
+    fetch("/api/hotel/rooms")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && Array.isArray(data.data?.categories)) {
-          const items: SearchItem[] = [];
-          for (const cat of data.data.categories) {
-            for (const s of cat.services || []) {
-              items.push({
-                id: s.id,
-                title: s.name,
-                category: cat.name,
-                rate: `GH₵ ${(s.pricePesewas / 100).toFixed(2)}`,
-                duration: `${s.durationMin} min`,
-                description: s.description || "",
-              });
-            }
-          }
+        if (data.success && Array.isArray(data.data)) {
+          const items: SearchItem[] = data.data.map((rt: any) => ({
+            id: rt.slug,
+            title: rt.name,
+            category: "SUITES & ROOMS",
+            rate: `GH₵ ${(rt.basePricePesewas / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} / night`,
+            duration: rt.bedConfiguration || `${rt.maxAdults} Adults`,
+            description: rt.description || "",
+          }));
           if (items.length > 0) {
             setCatalogItems(items);
           }
@@ -149,18 +136,17 @@ export function PublicNavbar() {
     e.preventDefault();
     setSearchOpen(false);
     if (searchQuery.trim()) {
-      router.push(`/our-services?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/rooms?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      router.push("/our-services");
+      router.push("/rooms");
     }
   };
 
   const navLinks = [
-    { href: "/our-services", label: "Treatments" },
-    { href: "/gallery", label: "Lookbook" },
-    { href: "/contact", label: "About Us" },
-    { href: "/policies", label: "Policies" },
-    { href: "/contact", label: "Contact" },
+    { href: "/rooms", label: "Suites & Rooms" },
+    { href: "/policies", label: "Hotel Policies" },
+    { href: "/manage", label: "Manage Stay" },
+    { href: "/contact", label: "Concierge & Contact" },
   ];
 
   return (
@@ -171,7 +157,7 @@ export function PublicNavbar() {
           <Link href="/" className="flex items-center gap-2.5 group cursor-pointer shrink-0">
             <BrandLogo variant="mark" theme="gold" size="sm" className="drop-shadow-sm group-hover:scale-105 transition-transform" />
             <span className="text-white text-lg sm:text-2xl font-black tracking-tight group-hover:text-zinc-200 transition-colors">
-              Becca&apos;s Crown
+              Aura Royal Hotel
             </span>
           </Link>
 
@@ -202,7 +188,7 @@ export function PublicNavbar() {
                   <Search className="w-3.5 h-3.5 text-zinc-300 mr-1.5 sm:mr-2 shrink-0" />
                   <input
                     type="text"
-                    placeholder="Search services..."
+                    placeholder="Search suites, amenities..."
                     value={searchQuery}
                     onFocus={() => setSearchOpen(true)}
                     onChange={(e) => {
@@ -234,7 +220,7 @@ export function PublicNavbar() {
               {searchOpen && searchQuery.trim().length > 0 && (
                 <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-h-80 overflow-y-auto rounded-2xl bg-zinc-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl p-2 z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                    {filteredSearch.length > 0 ? "Matching Treatments" : "No exact match"}
+                    {filteredSearch.length > 0 ? "Matching Suites & Experiences" : "No exact match"}
                   </div>
 
                   {filteredSearch.length > 0 ? (
@@ -242,7 +228,7 @@ export function PublicNavbar() {
                       {filteredSearch.map((item) => (
                         <Link
                           key={item.id}
-                          href={`/book?serviceId=${item.id}&step=2`}
+                          href={item.category.includes("SUITES") ? `/rooms/${item.id}` : "/rooms"}
                           onClick={() => setSearchOpen(false)}
                           className="flex items-center justify-between p-2 rounded-xl hover:bg-white/10 transition-colors group cursor-pointer"
                         >
@@ -259,14 +245,14 @@ export function PublicNavbar() {
                               {item.rate}
                             </div>
                             <span className="text-[9px] uppercase font-bold text-emerald-400 group-hover:underline">
-                              Book →
+                              View Suite →
                             </span>
                           </div>
                         </Link>
                       ))}
 
                       <Link
-                        href={`/our-services?q=${encodeURIComponent(searchQuery.trim())}`}
+                        href={`/rooms?q=${encodeURIComponent(searchQuery.trim())}`}
                         onClick={() => setSearchOpen(false)}
                         className="block text-center pt-2 pb-1 border-t border-white/10 text-[11px] font-bold text-zinc-300 hover:text-white transition-colors"
                       >
@@ -275,13 +261,13 @@ export function PublicNavbar() {
                     </div>
                   ) : (
                     <div className="p-3 text-center space-y-2">
-                      <p className="text-xs text-zinc-400">No services matching &ldquo;{searchQuery}&rdquo;</p>
+                      <p className="text-xs text-zinc-400">No suites matching &ldquo;{searchQuery}&rdquo;</p>
                       <Link
-                        href="/our-services"
+                        href="/rooms"
                         onClick={() => setSearchOpen(false)}
                         className="inline-block text-[11px] text-amber-300 font-bold hover:underline"
                       >
-                        Browse All Catalog Services →
+                        Browse All Suites & Rooms →
                       </Link>
                     </div>
                   )}
@@ -289,12 +275,12 @@ export function PublicNavbar() {
               )}
             </div>
 
-            {/* Staff Subdomain Portal */}
+            {/* Staff Portal Link */}
             <Link
-              href="https://dashboard.beccascrownbeauty.com"
+              href="/login"
               className="hidden md:inline-flex items-center px-3 py-1.5 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-white text-[11px] font-semibold transition-all cursor-pointer shrink-0"
             >
-              Staff
+              Staff Portal
             </Link>
 
             {/* White Background Capsule: Book Now! */}
@@ -302,7 +288,7 @@ export function PublicNavbar() {
               href="/book"
               className="inline-flex items-center justify-center px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white text-zinc-950 hover:bg-zinc-100 font-bold text-xs sm:text-sm tracking-tight transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 cursor-pointer shrink-0"
             >
-              Book Now!
+              Book Stay
             </Link>
 
             {/* Mobile Menu Toggle */}
@@ -335,7 +321,7 @@ export function PublicNavbar() {
               >
                 <BrandLogo variant="mark" theme="gold" size="xs" />
                 <span className="text-white text-base font-bold tracking-tight">
-                  Becca&apos;s Crown
+                  Aura Royal Hotel
                 </span>
               </Link>
               <button
@@ -360,7 +346,7 @@ export function PublicNavbar() {
                 <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search braids, lashes, installs..."
+                  placeholder="Search suites, amenities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-transparent text-xs text-white placeholder-zinc-400 focus:outline-none"
@@ -404,13 +390,13 @@ export function PublicNavbar() {
                   className="w-full bg-white hover:bg-zinc-100 text-zinc-950 font-black py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg cursor-pointer active:scale-95 transition-transform"
                 >
                   <Calendar className="w-4 h-4" />
-                  <span>Book Now!</span>
+                  <span>Reserve Suite</span>
                 </button>
               </Link>
               <div className="flex items-center justify-between text-xs text-zinc-400 pt-1 px-1">
                 <span className="font-semibold text-[11px]">🇬🇭 Ghana • GHS (GH₵)</span>
                 <Link
-                  href="https://dashboard.beccascrownbeauty.com"
+                  href="/login"
                   onClick={() => setMobileMenuOpen(false)}
                   className="font-bold text-[11px] text-zinc-300 hover:text-white"
                 >

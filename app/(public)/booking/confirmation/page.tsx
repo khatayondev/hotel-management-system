@@ -100,13 +100,20 @@ function BookingConfirmationContent() {
   }
 
   const b = data.booking;
-  const balanceDue = b ? Math.max(0, b.totalPesewas - b.amountPaidPesewas) : 0;
+  const res = data.reservation;
+  const isHotel = Boolean(data.isHotel || res);
+  const activeRef = res?.reference || b?.reference || (reference as string) || "";
+  const balanceDue = res
+    ? Math.max(0, res.totalPesewas - res.amountPaidPesewas)
+    : b
+    ? Math.max(0, b.totalPesewas - b.amountPaidPesewas)
+    : 0;
 
   return (
     <div className="max-w-2xl mx-auto py-8 sm:py-12 px-4 space-y-6">
       {/* Real-time Payment Request Banner */}
       <PaymentRequestBanner
-        reference={b?.reference || (reference as string) || ""}
+        reference={activeRef}
         onPaymentSettled={() => {
           if (reference) {
             fetch(`/api/payments/verify?ref=${encodeURIComponent(reference)}`)
@@ -126,23 +133,75 @@ function BookingConfirmationContent() {
 
         <div className="space-y-2">
           <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-[11px] font-bold uppercase tracking-wider text-emerald-800 border border-emerald-200">
-            Payment & Booking Confirmed
+            Payment &amp; Stay Confirmed
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-[#1E1E1E] tracking-tight">
             You&apos;re All Set!
           </h1>
-          {b?.reference && (
+          {activeRef && (
             <p className="text-xs text-[#71717A]">
-              Booking Reference:{" "}
-              <strong className="text-base text-[#1E1E1E] font-black tracking-wider">
-                {b.reference}
+              Reservation Reference:{" "}
+              <strong className="text-base text-[#1E1E1E] font-black tracking-wider font-mono">
+                {activeRef}
               </strong>
             </p>
           )}
         </div>
 
-        {/* Appointment Breakdown */}
-        {b && (
+        {/* Hotel Stay Breakdown */}
+        {res && (
+          <div className="p-5 rounded-2xl bg-[#F4F4F6] text-left space-y-3 text-xs">
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Guest Name:</span>
+              <span className="font-bold text-[#1E1E1E]">{res.guestName}</span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Phone:</span>
+              <span className="font-bold text-[#1E1E1E]">{res.guestPhone}</span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Reserved Suite:</span>
+              <span className="font-extrabold text-[#1E1E1E]">
+                {res.rooms[0]?.roomTypeName || "Luxury Hotel Suite"}
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Stay Dates:</span>
+              <span className="font-bold text-[#1E1E1E]">
+                {new Date(res.checkInDate).toISOString().slice(0, 10)} (Check-in 14:00) →{" "}
+                {new Date(res.checkOutDate).toISOString().slice(0, 10)} (Check-out 11:00)
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Occupancy:</span>
+              <span className="font-bold text-[#1E1E1E]">
+                {res.adults} Adult{res.adults > 1 ? "s" : ""}, {res.children} Child{res.children !== 1 ? "ren" : ""}
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2">
+              <span className="text-[#71717A]">Total Amount:</span>
+              <span className="font-bold text-[#1E1E1E]">{formatPesewas(res.totalPesewas)}</span>
+            </div>
+            <div className="flex justify-between border-b border-black/5 pb-2 text-emerald-800">
+              <span className="font-bold">Paid Online (Paystack):</span>
+              <span className="font-extrabold">{formatPesewas(res.amountPaidPesewas)}</span>
+            </div>
+            {balanceDue > 0 ? (
+              <div className="flex justify-between pt-1 text-amber-900 font-bold">
+                <span>Remaining Balance Due at Check-In:</span>
+                <span className="font-black text-sm">{formatPesewas(balanceDue)}</span>
+              </div>
+            ) : (
+              <div className="flex justify-between pt-1 text-emerald-800 font-bold">
+                <span>Payment Status:</span>
+                <span className="font-black">Fully Paid</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Appointment Breakdown (Fallback for legacy bookings) */}
+        {!res && b && (
           <div className="p-5 rounded-2xl bg-[#F4F4F6] text-left space-y-3 text-xs">
             <div className="flex justify-between border-b border-black/5 pb-2">
               <span className="text-[#71717A]">Client:</span>
@@ -152,14 +211,8 @@ function BookingConfirmationContent() {
               <span className="text-[#71717A]">Phone:</span>
               <span className="font-bold text-[#1E1E1E]">{b.customerPhone}</span>
             </div>
-            {/* Solo direct shop mode: Stylist row omitted
             <div className="flex justify-between border-b border-black/5 pb-2">
-              <span className="text-[#71717A]">Assigned Stylist:</span>
-              <span className="font-bold text-[#1E1E1E]">{b.staffName}</span>
-            </div>
-            */}
-            <div className="flex justify-between border-b border-black/5 pb-2">
-              <span className="text-[#71717A]">Date & Time:</span>
+              <span className="text-[#71717A]">Date &amp; Time:</span>
               <span className="font-extrabold text-[#1E1E1E]">
                 {new Date(b.startUtc).toLocaleDateString("en-GB", {
                   timeZone: "Africa/Accra",
@@ -199,64 +252,40 @@ function BookingConfirmationContent() {
           </div>
         )}
 
-        {/* Balance Payment Callout if deposit only */}
-        {balanceDue > 0 && b && (
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-2">
-            <div className="flex items-center gap-2 text-amber-900 text-xs font-bold">
-              <CreditCard className="w-4 h-4" />
-              <span>Want to settle your remaining balance before you arrive?</span>
-            </div>
-            <p className="text-[11px] text-amber-800 leading-relaxed">
-              You can pay the remaining {formatPesewas(balanceDue)} online anytime before your appointment using Mobile Money or Card.
-            </p>
-            <div className="pt-1">
-              <Link href={`/booking/pay-balance?ref=${b.reference}`}>
-                <Button
-                  size="sm"
-                  className="bg-amber-900 hover:bg-amber-950 text-white rounded-full text-xs font-bold px-4 h-8 cursor-pointer gap-1"
-                >
-                  <span>Pay Remaining Balance Online</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Studio Info */}
+        {/* Hotel Info */}
         <div className="text-left space-y-2 text-xs text-[#71717A] border-t border-black/5 pt-4">
           <p className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Instant SMS booking confirmation dispatched to {b?.customerPhone}.</span>
+            <span>Instant SMS reservation confirmation sent to your phone.</span>
           </p>
           <p className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-[#1E1E1E] shrink-0" />
-            <span>Becca&apos;s Crown Beauty Vault: Lagos Avenue, East Legon, Accra.</span>
+            <span>Aura Royal Hotel &amp; Restaurant: Airport Residential Area, Accra, Ghana.</span>
           </p>
           <p className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#1E1E1E] shrink-0" />
-            <span>Please arrive 10 minutes prior to your scheduled time.</span>
+            <span>Standard check-in is 2:00 PM; check-out is 11:00 AM.</span>
           </p>
         </div>
 
         <div className="pt-2 flex flex-col gap-3">
-          {b?.reference && (
-            <Link href={`/manage/${encodeURIComponent(b.reference)}`}>
+          {activeRef && (
+            <Link href={`/manage/${encodeURIComponent(activeRef)}`}>
               <Button
                 variant="blackPill"
                 size="md"
-                className="w-full text-xs font-bold cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md gap-2"
+                className="w-full text-xs font-bold cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black shadow-md gap-2"
               >
-                <span>View &amp; Manage Your Booking Pass</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>View &amp; Manage Your Stay</span>
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/book" className="flex-1">
+            <Link href="/rooms" className="flex-1">
               <Button variant="outlinePill" size="md" className="w-full text-xs font-bold cursor-pointer">
-                Book Another Appointment
+                View Other Suites
               </Button>
             </Link>
             <Link href="/" className="flex-1">

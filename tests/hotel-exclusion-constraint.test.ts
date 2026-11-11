@@ -106,7 +106,12 @@ describe("Hotel Domain Database Constraints & Concurrency Protection", () => {
       where: { guestId: { in: [testGuestId, testGuest2Id] } },
     });
     await prisma.room.deleteMany({
-      where: { id: { in: [testRoom101Id, testRoom102Id] } },
+      where: {
+        OR: [
+          { id: { in: [testRoom101Id, testRoom102Id] } },
+          { roomTypeId: testRoomTypeId },
+        ],
+      },
     });
     await prisma.roomType.deleteMany({
       where: { id: testRoomTypeId },

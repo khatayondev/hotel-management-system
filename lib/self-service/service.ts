@@ -257,13 +257,24 @@ export async function sendLookupOtp(reference: string, phone: string, clientIp: 
     include: { customer: true },
   });
 
-  if (!booking) {
-    throw new AppError("No booking found matching reference.", 404, "BOOKING_NOT_FOUND");
+  const hotelReservation = !booking
+    ? await prisma.reservation.findUnique({
+        where: { reference: cleanRef },
+        include: { guest: true },
+      })
+    : null;
+
+  if (!booking && !hotelReservation) {
+    throw new AppError("No booking or reservation found matching reference.", 404, "BOOKING_NOT_FOUND");
   }
 
-  const custPhone = normalizeGhanaPhone(booking.customer.phone || "");
+  const phoneToCheck = booking
+    ? booking.customer.phone || ""
+    : hotelReservation?.guest.phone || "";
+
+  const custPhone = normalizeGhanaPhone(phoneToCheck);
   if (custPhone !== normPhone) {
-    throw new AppError("No booking found matching reference and phone.", 404, "BOOKING_NOT_FOUND");
+    throw new AppError("No booking or reservation found matching reference and phone.", 404, "BOOKING_NOT_FOUND");
   }
 
   // Generate 6-digit random code
@@ -277,10 +288,11 @@ export async function sendLookupOtp(reference: string, phone: string, clientIp: 
   });
 
   try {
+    const brandName = hotelReservation ? "Aura Royal Hotel" : "Becca's Crown Beauty Vault";
     await sendSms({
       recipient: normPhone,
-      message: `Your Becca's Crown Beauty Vault self-service verification code is ${code}. It expires in 10 minutes.`,
-      senderId: "BeccasCrown",
+      message: `Your ${brandName} self-service verification code is ${code}. It expires in 10 minutes.`,
+      senderId: hotelReservation ? "AuraHotel" : "BeccasCrown",
     });
   } catch (err) {
     logger.warn(`Failed to send SMS OTP to ${normPhone}: ${err}`);

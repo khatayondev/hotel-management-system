@@ -101,3 +101,4 @@ export function getHoursUntilCheckIn(
   const diffMs = checkInTimestamp.getTime() - now.getTime();
   return diffMs / (1000 * 60 * 60);
 }
+

@@ -103,12 +103,34 @@ export interface BookingSummaryData {
   items: BookingItemSummary[];
 }
 
+export interface HotelReservationSummaryData {
+  id: string;
+  reference: string;
+  status: string;
+  checkInDate: string | Date;
+  checkOutDate: string | Date;
+  adults: number;
+  children: number;
+  totalPesewas: number;
+  depositRequiredPesewas: number;
+  amountPaidPesewas: number;
+  guestName: string;
+  guestPhone: string;
+  rooms: Array<{
+    roomTypeName: string;
+    roomNumber: string;
+  }>;
+}
+
 export interface BookingVerifyData {
   verified: boolean;
   alreadyProcessed?: boolean;
   paymentStatus?: PaymentStatusType;
   bookingStatus?: BookingStatusType;
+  reservationStatus?: string;
   amountPaidPesewas?: number;
   booking?: BookingSummaryData | null;
+  isHotel?: boolean;
+  reservation?: HotelReservationSummaryData | null;
   message?: string;
 }

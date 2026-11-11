@@ -45,7 +45,7 @@ const ACTIVE_RESERVATION_STATUSES: ReservationStatus[] = [
  */
 export async function createReservationFromHold(input: CreateReservationFromHoldInput) {
   const parsed = createReservationFromHoldSchema.parse(input);
-  const { holdToken, guestId: providedGuestId, guest: guestData, adults, children, extras, notes, source } = parsed;
+  const { holdToken, guestId: providedGuestId, guest: guestData, adults, children, extras, notes, source, initialStatus } = parsed;
 
   return await prisma.$transaction(async (tx) => {
     // 1. Fetch and validate RoomHold
@@ -122,6 +122,8 @@ export async function createReservationFromHold(input: CreateReservationFromHold
     const reference = `HTL-${dateYear}-${randPart}`;
 
     // 5. Create Reservation
+    const targetStatus = initialStatus || ReservationStatus.CONFIRMED;
+
     const reservation = await tx.reservation.create({
       data: {
         reference,
@@ -130,7 +132,7 @@ export async function createReservationFromHold(input: CreateReservationFromHold
         checkOutDate: hold.checkOut,
         adults,
         children,
-        status: ReservationStatus.CONFIRMED,
+        status: targetStatus,
         subtotalPesewas: pricing.subtotalPesewas,
         taxPesewas: pricing.taxTotalPesewas,
         totalPesewas: pricing.totalPesewas,
@@ -150,7 +152,7 @@ export async function createReservationFromHold(input: CreateReservationFromHold
           roomId: null, // Room assignment happens at check-in or via assignRoom()
           checkIn: hold.checkIn,
           checkOut: hold.checkOut,
-          status: ReservationStatus.CONFIRMED,
+          status: targetStatus,
           nightlyRatesSnapshot: pricing.nightlyRates as unknown as Prisma.InputJsonValue,
         },
       });

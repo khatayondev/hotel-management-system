@@ -1,46 +1,46 @@
 import Link from "next/link";
-import { ShieldCheck, Clock, RefreshCw, AlertCircle, Crown, ArrowRight, UserCheck, Sparkles, Camera } from "lucide-react";
+import { ShieldCheck, Clock, RefreshCw, AlertCircle, Hotel, ArrowRight, UserCheck, Sparkles, Key, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export const metadata = {
-  title: "Policies & Terms | Becca's Crown Beauty Vault",
+  title: "Hotel Policies & Stay Standards | Aura Royal Hotel & Suites",
   description:
-    "Review our transparent studio policies: 30% non-refundable deposit, punctuality rules, solo client policy, hygiene standards, and rescheduling in Accra, Ghana.",
+    "Review our hotel policies: standard check-in (14:00) and check-out (11:00), 48-hour free cancellation, booking deposits, guest registration, and housekeeping in Accra, Ghana.",
 };
 
 export default function PoliciesPage() {
   const policies = [
     {
-      icon: ShieldCheck,
-      title: "Mandatory 30% Non-Refundable Deposit",
-      desc: "All reservations require a non-refundable 30% deposit to lock in your artist, equipment, and time slot. When you select a slot in our booking wizard, it is held while payment is processed securely via Paystack. The remaining 70% balance is payable upon arrival.",
-    },
-    {
       icon: Clock,
-      title: "Punctuality & 30-Minute Cancellation",
-      desc: "Clients are required to arrive 10 minutes prior to their scheduled start time to ensure a seamless prep and consultation. If you arrive 30 minutes late, your appointment will be automatically cancelled and your deposit forfeited to protect subsequent client schedules.",
-    },
-    {
-      icon: UserCheck,
-      title: "Solo Client Policy (Strictly No Plus-Ones)",
-      desc: "To preserve an intimate, tranquil, and hygienic studio atmosphere, only the individual receiving the scheduled service is permitted inside the studio. Friends, partners, and family members not booked for an active service cannot enter the treatment area or waiting lounge.",
+      title: "Standard Check-In & Check-Out Times",
+      desc: "Check-in begins at 2:00 PM (14:00) and check-out is by 11:00 AM. Early check-in or late check-out requests are subject to room availability and may incur nominal hourly fees or require booking our Late Check-out extra.",
     },
     {
       icon: RefreshCw,
-      title: "Rescheduling & Deposit Transfer",
-      desc: "We understand unexpected schedule shifts occur. You may reschedule your appointment up to 24 hours prior to your scheduled time to transfer your deposit once to a new date within 30 days. Reschedules requested under 24 hours forfeit the deposit.",
+      title: "48-Hour Free Cancellation & Refunds",
+      desc: "Guests may cancel free of charge up to 48 hours prior to the standard check-in time (14:00 on the check-in date) for a 100% refund of any deposit paid. Cancellations made within 48 hours of check-in, or no-shows, incur the configured policy penalty.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Guaranteed Reservation Deposit",
+      desc: "To guarantee your suite reservation, an upfront deposit (or full payment) is processed securely via Paystack using Mobile Money or Card. A 10-minute hold is placed while you complete checkout. The remaining balance can be settled in the guest portal or at the front desk.",
+    },
+    {
+      icon: UserCheck,
+      title: "Mandatory Photo ID & Guest Registration",
+      desc: "In accordance with Ghana Tourism Authority (GTA) regulations and hotel security standards, all adult guests must present a valid government-issued photo ID (Ghana Card, Passport, Driver's License, or ECOWAS Biometric ID) upon arrival.",
     },
     {
       icon: Sparkles,
-      title: "Client Preparation & Hygiene Standards",
-      desc: "For lash and brow services, please arrive with completely clean, oil-free eyes free of mascara or glue. For hair services, arrive with clean, detangled hair unless instructed otherwise. Please notify your specialist of any allergies or skin sensitivities beforehand.",
+      title: "Housekeeping & Room Turnover Standards",
+      desc: "Our dedicated housekeeping team provides daily cleaning, luxury linen refresh, and turndown service. Suites undergo rigorous inspection before guest handover. Specific housekeeping requests can be coordinated directly with the front desk.",
     },
     {
-      icon: Camera,
-      title: "Photography & Media Courtesy",
-      desc: "We love capturing and celebrating our artistry! Photos or short videos of your completed glam may be taken for our professional portfolio and social channels. If you prefer not to appear on camera, simply inform your artist at the start of your session.",
+      icon: Key,
+      title: "Smoke-Free Property & Respectful Stay",
+      desc: "All indoor guest suites, corridors, and restaurant dining areas are strictly 100% non-smoking. Designated outdoor areas are provided for smokers. A deep cleaning fee will be charged to the guest folio if smoking occurs inside a suite.",
     },
   ];
 
@@ -50,14 +50,14 @@ export default function PoliciesPage() {
       <ScrollReveal variant="fade-up">
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Fair & Transparent Standards</span>
+            <Hotel className="w-3.5 h-3.5 text-amber-600" />
+            <span>Hospitality & Guest Standards</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-black text-[#1E1E1E] tracking-tight">
-            Studio Policies
+            Hotel Stay Policies
           </h1>
           <p className="text-xs sm:text-sm text-[#71717A] max-w-xl mx-auto leading-relaxed">
-            Our policies are designed to ensure seamless service, zero double-booking, and an exceptional luxury experience for every client.
+            Designed to ensure flawless hospitality, supreme privacy, and transparent booking standards for every guest at Aura Royal Hotel.
           </p>
         </div>
       </ScrollReveal>
@@ -87,21 +87,21 @@ export default function PoliciesPage() {
       <ScrollReveal variant="fade-up">
         <Card variant="glass" className="p-8 text-center space-y-4 rounded-[32px]">
           <h2 className="text-lg sm:text-xl font-black text-[#1E1E1E]">
-            Have questions about your upcoming event or booking?
+            Have inquiries regarding an upcoming reservation or group booking?
           </h2>
           <p className="text-xs text-[#71717A] max-w-md mx-auto">
-            Our studio concierge is available daily via WhatsApp or phone call to assist with group bookings, custom bridal trials, and policy inquiries.
+            Our 24/7 Front Desk Concierge is available via WhatsApp or telephone to assist with suite selections, special requests, and airport transfers.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link href="/contact">
               <Button variant="blackPill" size="md" className="gap-2 text-xs font-bold shadow-md cursor-pointer">
-                <span>Contact Concierge</span>
+                <span>Contact Front Desk</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
-            <Link href="/book">
-              <Button variant="outlinePill" size="md" className="text-xs font-semibold bg-white cursor-pointer">
-                <span>Proceed to Booking</span>
+            <Link href="/manage">
+              <Button variant="outline" size="md" className="rounded-full text-xs font-bold px-5 cursor-pointer">
+                <span>Manage Existing Stay</span>
               </Button>
             </Link>
           </div>

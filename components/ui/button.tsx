@@ -13,6 +13,9 @@ const buttonVariants = cva(
         // Outline pill: white/transparent background, 1px grey border, dark text
         outlinePill:
           "bg-white/80 hover:bg-white text-[#1E1E1E] border border-[#E4E4E7] active:scale-[0.98] rounded-full shadow-xs",
+        // Standard outline
+        outline:
+          "bg-transparent border border-zinc-700 text-zinc-200 hover:bg-white/10 hover:text-white rounded-xl shadow-xs",
         // Circular icon button: round white button with subtle border
         circularIcon:
           "bg-white hover:bg-[#F4F4F6] text-[#1E1E1E] border border-[#E4E4E7] rounded-full p-2.5 shadow-xs aspect-square",

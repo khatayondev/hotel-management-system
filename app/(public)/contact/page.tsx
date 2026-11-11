@@ -8,6 +8,7 @@ import {
   Clock,
   Send,
   CheckCircle2,
+  Hotel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +20,7 @@ export default function ContactPage() {
   const [formData, setFormData] = React.useState({
     name: "",
     phone: "",
-    subject: "Bridal Inquiry",
+    subject: "Suite Reservation",
     message: "",
   });
 
@@ -36,13 +37,13 @@ export default function ContactPage() {
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
             <MapPin className="w-3.5 h-3.5 text-[#1E1E1E]" />
-            <span>East Legon • Greater Accra</span>
+            <span>Airport Residential Area • Accra</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-black text-[#1E1E1E] tracking-tight">
-            Get in Touch
+            Hotel Concierge & Inquiries
           </h1>
           <p className="text-xs sm:text-sm text-[#71717A] leading-relaxed">
-            Questions about bridal bookings, gown fittings, or custom appointments? We are here to assist you daily.
+            Inquiries regarding suite reservations, private fine dining, airport VIP transfers, or group corporate retreats.
           </p>
         </div>
       </ScrollReveal>
@@ -56,12 +57,12 @@ export default function ContactPage() {
                 <MapPin className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[#1E1E1E]">Studio Location</h3>
+                <h3 className="text-sm font-bold text-[#1E1E1E]">Hotel Location</h3>
                 <p className="text-xs text-[#71717A] leading-relaxed">
-                  Lagos Avenue, East Legon, Accra, Ghana
+                  14 Senchi Street, Airport Residential Area, Accra, Ghana
                 </p>
                 <a
-                  href="https://maps.google.com/?q=East+Legon+Accra"
+                  href="https://maps.google.com/?q=Airport+Residential+Area+Accra"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block text-[11px] font-bold text-[#1E1E1E] hover:underline pt-1"
@@ -78,16 +79,16 @@ export default function ContactPage() {
                 <Phone className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[#1E1E1E]">Phone & WhatsApp</h3>
+                <h3 className="text-sm font-bold text-[#1E1E1E]">Front Desk & Concierge</h3>
                 <p className="text-xs text-[#71717A]">
-                  Direct calls:{" "}
+                  24/7 Telephone:{" "}
                   <a href="tel:+233241112233" className="font-bold text-[#1E1E1E] hover:underline">
                     +233 (0) 24 111 2233
                   </a>
                 </p>
                 <div className="pt-2">
                   <a
-                    href="https://wa.me/233241112233?text=Hello%20Ghana%20and%20Beyond,%20I%20would%20like%20to%20inquire%20about%20a%20booking"
+                    href="https://wa.me/233241112233?text=Hello%20Aura%20Royal%20Hotel,%20I%20would%20like%20to%20inquire%20about%20a%20suite%20reservation"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -96,7 +97,7 @@ export default function ContactPage() {
                       className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold gap-1.5 h-8 px-4 cursor-pointer shadow-xs"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      <span>Chat on WhatsApp</span>
+                      <span>Chat with Concierge</span>
                     </Button>
                   </a>
                 </div>
@@ -110,15 +111,19 @@ export default function ContactPage() {
                 <Clock className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[#1E1E1E]">Studio Hours</h3>
+                <h3 className="text-sm font-bold text-[#1E1E1E]">Operational Hours</h3>
                 <div className="text-xs text-[#71717A] space-y-0.5">
                   <p className="flex justify-between gap-4">
-                    <span>Monday – Saturday:</span>
-                    <span className="font-bold text-[#1E1E1E]">9:00 AM – 7:00 PM</span>
+                    <span>Front Desk & Concierge:</span>
+                    <span className="font-bold text-[#1E1E1E]">24 Hours / 7 Days</span>
                   </p>
                   <p className="flex justify-between gap-4">
-                    <span>Sunday:</span>
-                    <span className="font-bold text-[#1E1E1E]">12:00 PM – 6:00 PM</span>
+                    <span>Restaurant & Room Service:</span>
+                    <span className="font-bold text-[#1E1E1E]">6:30 AM – 11:00 PM</span>
+                  </p>
+                  <p className="flex justify-between gap-4">
+                    <span>Standard Check-in / Out:</span>
+                    <span className="font-bold text-[#1E1E1E]">14:00 Check-in / 11:00 Check-out</span>
                   </p>
                 </div>
               </div>
@@ -135,10 +140,10 @@ export default function ContactPage() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-black text-[#1E1E1E]">
-                  Message Received!
+                  Inquiry Dispatched!
                 </h3>
                 <p className="text-xs text-[#71717A] max-w-sm mx-auto leading-relaxed">
-                  Thank you, <span className="font-bold text-[#1E1E1E]">{formData.name}</span>. Our studio manager will reach out via phone/WhatsApp at{" "}
+                  Thank you, <span className="font-bold text-[#1E1E1E]">{formData.name}</span>. Our hotel concierge team will contact you via phone/WhatsApp at{" "}
                   <span className="font-bold text-[#1E1E1E]">{formData.phone}</span> shortly.
                 </p>
                 <div className="pt-2">
@@ -147,7 +152,7 @@ export default function ContactPage() {
                     size="sm"
                     onClick={() => {
                       setFormSubmitted(false);
-                      setFormData({ name: "", phone: "", subject: "Bridal Inquiry", message: "" });
+                      setFormData({ name: "", phone: "", subject: "Suite Reservation", message: "" });
                     }}
                     className="cursor-pointer"
                   >
@@ -158,9 +163,9 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-1">
-                  <h3 className="text-lg font-black text-[#1E1E1E]">Send us a Note</h3>
+                  <h3 className="text-lg font-black text-[#1E1E1E]">Send Concierge a Message</h3>
                   <p className="text-xs text-[#71717A]">
-                    Fill out the form below and we will get back to you within 2 business hours.
+                    Fill out the form below and our hospitality desk will respond promptly.
                   </p>
                 </div>
 
@@ -170,14 +175,14 @@ export default function ContactPage() {
                     <Input
                       id="contact-name"
                       required
-                      placeholder="e.g. Ama Serwaa"
+                      placeholder="e.g. Kwame Mensah"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="contact-phone">Ghana Phone / WhatsApp *</Label>
+                    <Label htmlFor="contact-phone">Phone / WhatsApp Number *</Label>
                     <Input
                       id="contact-phone"
                       required
@@ -189,17 +194,18 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="contact-subject">Topic / Service Inquiry</Label>
+                  <Label htmlFor="contact-subject">Topic / Stay Inquiry</Label>
                   <select
                     id="contact-subject"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     className="w-full h-11 px-3.5 rounded-2xl border border-[#E4E4E7] bg-white text-xs font-semibold text-[#1E1E1E] focus:outline-hidden focus:border-[#1E1E1E]"
                   >
-                    <option value="Bridal Inquiry">Bridal Glam Consultation & Trials</option>
-                    <option value="Gown Fitting">Designer Evening Gown Fitting</option>
-                    <option value="Lashes & Hair">Lash Extensions or Hair Silk Press</option>
-                    <option value="Group Booking">Bridesmaids / Group Pamper Event</option>
+                    <option value="Suite Reservation">Suite Reservation & Rates</option>
+                    <option value="Restaurant Dining">Gourmet Restaurant Dining / Chef Table</option>
+                    <option value="Airport Transfer">VIP Airport Chauffeur Transfer</option>
+                    <option value="Corporate Retreat">Corporate Retreat / Group Booking</option>
+                    <option value="Special Occasion">Anniversary / Private Celebration</option>
                     <option value="Other">Other Inquiries</option>
                   </select>
                 </div>
@@ -209,7 +215,7 @@ export default function ContactPage() {
                   <Textarea
                     id="contact-message"
                     rows={4}
-                    placeholder="Tell us about your event date, required look, or questions..."
+                    placeholder="Provide details about your desired check-in dates, guest count, or special requests..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   />

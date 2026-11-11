@@ -64,6 +64,7 @@ export const createReservationFromHoldSchema = z.object({
   extras: z.array(extraSelectionSchema).optional().default([]),
   notes: z.string().optional(),
   source: z.nativeEnum(ReservationSource).optional().default(ReservationSource.WEBSITE),
+  initialStatus: z.nativeEnum(ReservationStatus).optional(),
 });
 
 export type CreateReservationFromHoldInput = z.input<typeof createReservationFromHoldSchema>;

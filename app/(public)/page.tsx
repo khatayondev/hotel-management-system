@@ -3,536 +3,434 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
+  Calendar,
+  Users,
+  Bed,
   ArrowRight,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
+  ShieldCheck,
   Star,
+  Sparkles,
+  UtensilsCrossed,
+  Wifi,
+  Coffee,
+  Waves,
+  MapPin,
+  Clock,
+  Phone,
+  CreditCard,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { formatPesewas } from "@/lib/money";
 
-const ALL_SIGNATURE_TREATMENTS = [
+const FEATURED_SUITES = [
   {
-    id: "2b5d4b8d-2578-43bb-b003-a98c98cfe2b5",
-    title: "Full Frontal Lace Installation",
-    category: "HAIR & INSTALLS",
-    rate: "GH₵ 160.00",
-    duration: "90 min",
-    image: "/images/ghanaian_hair_install.jpg",
-    description: "Bleaching of knots, hairline customization, melting band press & precision sleek styling.",
+    title: "Deluxe King Suite",
+    slug: "deluxe-king-suite",
+    category: "EXECUTIVE LUXURY",
+    pricePerNight: "GH₵ 1,200.00",
+    bedConfig: "1 California King Bed",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+    description: "Ocean-facing balcony, marble soaking tub, espresso machine, and pillowtop mattress.",
+    amenities: ["Ocean View", "Private Balcony", "Marble Bath", "24/7 Room Service"],
   },
   {
-    id: "d50e6584-a25e-4f8b-b7e7-0168aaa88fa4",
-    title: "Bridal Soft Glam Makeup",
-    category: "BRIDAL GLAM",
-    rate: "GH₵ 550.00",
-    duration: "90 min",
-    image: "/images/ghanaian_bridal_glam.jpg",
-    description: "Camera-ready HD soft contour, skin glaze prep, handcrafted lash fan & 24hr sealing setting spray.",
+    title: "Executive Panoramic Suite",
+    slug: "executive-panoramic-suite",
+    category: "UPPER EXECUTIVE",
+    pricePerNight: "GH₵ 1,850.00",
+    bedConfig: "1 King Bed + 1 Daybed",
+    image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80",
+    description: "Floor-to-ceiling skyline glass, separate executive salon, workstation, and lounge privileges.",
+    amenities: ["Skyline Views", "Executive Lounge", "Workstation", "Cocktail Bar"],
   },
   {
-    id: "df8ee128-8912-4ac5-84bf-85aac75b5686",
-    title: "Mega Volume Russian Lashes",
-    category: "LASHES",
-    rate: "GH₵ 280.00",
-    duration: "90 min",
-    image: "/images/ghanaian_volume_lashes.jpg",
-    description: "Multi-dimensional fluffy volume fans custom mapped to your natural eye shape for supreme drama.",
-  },
-  {
-    id: "c0292917-7f05-4de9-956e-41130a586b7f",
-    title: "Luxury Jelly Spa Pedicure",
-    category: "PEDICURE & SPA",
-    rate: "GH₵ 160.00",
-    duration: "90 min",
-    image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80",
-    description: "Gelatinous thermal soak, callus peel, sugar polish scrub, foot massage and gel color finish.",
-  },
-  {
-    id: "99436d01-56bb-4e23-abce-550f91af5e5a",
-    title: "Frontal Sleek High Pony",
-    category: "HAIR & INSTALLS",
-    rate: "GH₵ 200.00",
-    duration: "150 min",
-    image: "/images/ghanaian_hero_beauty.jpg",
-    description: "High tension sculpted sleek ponytail with customized ear-to-ear lace frontal melting.",
-  },
-  {
-    id: "07850cc7-ffd1-44f1-9988-874726bc9c7b",
-    title: "Goddess Knotless Braids",
-    category: "HAIR & INSTALLS",
-    rate: "GH₵ 350.00",
-    duration: "180 min",
-    image: "/images/ghanaian_goddess_braids.jpg",
-    description: "Pain-free root feeding with human hair curls woven throughout for a full, lightweight silhouette.",
+    title: "Royal Presidential Penthouse",
+    slug: "royal-presidential-penthouse",
+    category: "CROWN RESIDENCE",
+    pricePerNight: "GH₵ 4,500.00",
+    bedConfig: "2 King Master Suites",
+    image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+    description: "Dual master suites, private rooftop terrace with heated plunge pool and dedicated butler.",
+    amenities: ["Rooftop Plunge Pool", "Personal Butler", "Formal Dining", "Airport Chauffeur"],
   },
 ];
 
-const VAULT_SUITES = [
+const HOTEL_EXPERIENCES = [
   {
-    title: "Bridal Suite",
-    subtitle: "Private Dressing",
-    image: "/images/ghanaian_bridal_glam.jpg",
+    title: "Aura Signature Dining",
+    subtitle: "Pan-African & French Fusion",
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    description: "Curated seasonal tasting menus, fresh Atlantic seafood, and bespoke cellar pairings.",
   },
   {
-    title: "Hair Vault",
-    subtitle: "Lace Stations",
-    image: "/images/ghanaian_hair_install.jpg",
+    title: "The Horizon Rooftop Bar",
+    subtitle: "Sunset Cocktails & Vistas",
+    image: "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=800&q=80",
+    description: "Panoramic views of the Accra coastline with handcrafted botanical cocktails and live jazz.",
   },
   {
-    title: "Lash Lounge",
-    subtitle: "Ergonomic Pods",
-    image: "/images/ghanaian_volume_lashes.jpg",
-  },
-  {
-    title: "Nail Bar",
-    subtitle: "Jelly Basins",
-    image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    title: "VIP Lounge",
-    subtitle: "Champagne Bar",
-    image: "/images/ghanaian_hero_beauty.jpg",
+    title: "Heated Infinity Pool",
+    subtitle: "Cabanas & Garden Oasis",
+    image: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=800&q=80",
+    description: "Daybed butler service, refreshing fruit skewers, and ambient underwater soundscapes.",
   },
 ];
 
-export default function CustomerPublicPage() {
-  // Section 02 Category Filter State
-  const [activeFilter, setActiveFilter] = React.useState<string>("ALL");
-  const [carouselIndex, setCarouselIndex] = React.useState<number>(0);
+function getTomorrowDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
-  const filterOptions = ["ALL", "HAIR & INSTALLS", "BRIDAL GLAM", "LASHES", "PEDICURE & SPA"];
+function getThreeDaysDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 3);
+  return d.toISOString().slice(0, 10);
+}
 
-  const filteredTreatments = React.useMemo(() => {
-    if (activeFilter === "ALL") return ALL_SIGNATURE_TREATMENTS;
-    return ALL_SIGNATURE_TREATMENTS.filter((t) => t.category === activeFilter);
-  }, [activeFilter]);
+export default function HotelHomePage() {
+  const router = useRouter();
 
-  const handlePrev = () => {
-    setCarouselIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, filteredTreatments.length - 2)));
-  };
+  const [checkIn, setCheckIn] = React.useState<string>(getTomorrowDateStr());
+  const [checkOut, setCheckOut] = React.useState<string>(getThreeDaysDateStr());
+  const [adults, setAdults] = React.useState<number>(2);
+  const [children, setChildren] = React.useState<number>(0);
 
-  const handleNext = () => {
-    setCarouselIndex((prev) => (prev < filteredTreatments.length - 2 ? prev + 1 : 0));
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (checkOut <= checkIn) {
+      alert("Check-out date must be after check-in date.");
+      return;
+    }
+    const params = new URLSearchParams({
+      checkIn,
+      checkOut,
+      adults: adults.toString(),
+      children: children.toString(),
+    });
+    router.push(`/rooms?${params.toString()}`);
   };
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden bg-white text-[#18181B] selection:bg-black selection:text-white pb-12">
-      {/* =========================================================================
-          HERO SECTION (Minimalistic & Modern Studio with Radiant Ghanaian Artistry)
-      ========================================================================= */}
-      <section className="w-full max-w-full overflow-x-hidden p-0 bg-zinc-950">
-        <div className="relative w-full overflow-hidden shadow-2xl bg-[#18191c] flex flex-col justify-end sm:justify-center min-h-[720px] sm:min-h-[760px] lg:min-h-[820px]">
-          {/* Hero Beauty Background (Radiant Ghanaian bridal glam & lash artistry) */}
-          <div className="absolute inset-0 z-0">
-            <Image
-              src="/images/william-boateng-YE8pmhb_swo-unsplash.jpg"
-              alt="Becca's Crown Beauty Vault Artistry"
-              fill
-              priority
-              className="object-cover object-[center_18%] sm:object-[center_35%] scale-100"
-              sizes="100vw"
-            />
-            {/* Ambient Vignette for Crisp Contrast & Legibility: sheer at the top on mobile so her face shines, deep at the bottom for typography */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/20 to-black/85 sm:from-black/80 sm:via-black/35 sm:to-black/60" />
-          </div>
-
-          {/* ===================================================================
-              CENTER EDITORIAL TYPOGRAPHY & HERO CTA PILL
-          =================================================================== */}
-          <div className="relative z-10 px-4 sm:px-6 pt-40 pb-12 sm:py-32 lg:py-36 text-center max-w-5xl mx-auto w-full">
-            <h1 className="text-[2.25rem] xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white tracking-tight leading-[1.08] sm:leading-[1.04] drop-shadow-lg">
-              <span className="block">Our artistry is</span>
-              <span className="block mt-1 sm:mt-2">minimalistic &amp; modern</span>
-            </h1>
-
-            <p className="mt-4 sm:mt-6 text-sm sm:text-base lg:text-lg text-zinc-100 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow-md">
-              We will be able to provide you with the best beauty experience
-              from the master artisans at Becca&apos;s Crown Beauty Vault
-            </p>
-
-            {/* Hero CTA Pill: Book an Appointment Now */}
-            <div className="mt-7 sm:mt-10 max-w-md sm:max-w-xl mx-auto px-2">
-              <Link
-                href="/book"
-                className="group relative flex items-center justify-center rounded-full border border-white/30 hover:border-white/60 bg-black/50 hover:bg-black/70 backdrop-blur-md shadow-2xl px-12 sm:px-14 py-3 sm:py-3.5 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-              >
-                <span className="text-center text-xs sm:text-sm md:text-base font-bold text-white group-hover:text-amber-200 transition-colors tracking-wider uppercase">
-                  BOOK AN APPOINTMENT NOW
-                </span>
-
-                <div className="absolute right-2 sm:right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500 group-hover:bg-amber-400 text-black flex items-center justify-center transition-all duration-300 group-hover:rotate-45 shadow-md shrink-0">
-                  <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5 text-black stroke-[2.5]" />
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION 01: OUR SERVICES (Numbered 01 with 3 Big Cards & Editorial Quote)
-      ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-8 py-20 lg:py-28 space-y-16">
-        {/* Section Header with 01 Numeral */}
-        <ScrollReveal variant="fade-up">
-          <div className="flex items-center gap-6 sm:gap-10">
-            <span className="text-4xl sm:text-6xl font-poppins text-zinc-300 font-light select-none tracking-tight">
-              01
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-              Our services
-            </h2>
-          </div>
-        </ScrollReveal>
-
-        {/* 3 Image Cards with Rounded Corners & Badges */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {/* Card 1: Hair & Lace */}
-          <ScrollReveal variant="fade-up" delayMs={0}>
-            <div className="group relative rounded-[28px] overflow-hidden aspect-[4/5] bg-zinc-900 shadow-md">
-              <Image
-                src="/images/ghanaian_hair_install.jpg"
-                alt="Hair Installation and Lace Melting"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
-                <div>
-                  <p className="text-xs text-amber-200 uppercase font-semibold tracking-wider">Precision Melting</p>
-                  <h3 className="text-lg font-bold">Hair & Lace Artistry</h3>
-                </div>
-                <Link href="/book?serviceId=2b5d4b8d-2578-43bb-b003-a98c98cfe2b5&step=2">
-                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#FACC15] transition-colors cursor-pointer shadow-md">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* Card 2: Bridal & Glam */}
-          <ScrollReveal variant="fade-up" delayMs={150}>
-            <div className="group relative rounded-[28px] overflow-hidden aspect-[4/5] bg-zinc-900 shadow-md">
-              <Image
-                src="/images/ghanaian_bridal_glam.jpg"
-                alt="Bridal and Editorial Makeup"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
-                <div>
-                  <p className="text-xs text-amber-200 uppercase font-semibold tracking-wider">High Definition</p>
-                  <h3 className="text-lg font-bold">Couture Bridal Makeup</h3>
-                </div>
-                <Link href="/book?serviceId=d50e6584-a25e-4f8b-b7e7-0168aaa88fa4&step=2">
-                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#FACC15] transition-colors cursor-pointer shadow-md">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* Card 3: Lashes & Pedicure */}
-          <ScrollReveal variant="fade-up" delayMs={300}>
-            <div className="group relative rounded-[28px] overflow-hidden aspect-[4/5] bg-zinc-900 shadow-md">
-              <Image
-                src="/images/ghanaian_volume_lashes.jpg"
-                alt="Lashes and Spa Pedicure"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-white">
-                <div>
-                  <p className="text-xs text-amber-200 uppercase font-semibold tracking-wider">Russian & Jelly Spa</p>
-                  <h3 className="text-lg font-bold">Lashes & Foot Care</h3>
-                </div>
-                <Link href="/book?serviceId=df8ee128-8912-4ac5-84bf-85aac75b5686&step=2">
-                  <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-[#FACC15] transition-colors cursor-pointer shadow-md">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </Link>
-              </div>
-            </div>
-          </ScrollReveal>
+    <div className="space-y-16 sm:space-y-24 pb-16">
+      {/* ------------------------------------------------------------- */}
+      {/* 1. HERO SECTION WITH EMBEDDED SEARCH ENGINE */}
+      {/* ------------------------------------------------------------- */}
+      <section className="relative min-h-[90vh] flex flex-col justify-between pt-12 pb-16 px-4 sm:px-6 lg:px-8 bg-neutral-950 text-white overflow-hidden">
+        {/* Background Atmosphere */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2400&q=85"
+            alt="Aura Royal Hotel & Restaurant Accra"
+            fill
+            priority
+            className="object-cover opacity-35 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-neutral-950/30" />
         </div>
 
-        {/* Center Editorial Statement & Button */}
-        <ScrollReveal variant="fade-up" delayMs={200}>
-          <div className="text-center max-w-2xl mx-auto space-y-6 pt-4">
-            <p className="text-base sm:text-lg text-zinc-700 leading-relaxed font-normal">
-              Whether you&apos;re preparing for your bridal aisle, a high-stakes executive gala, or your signature monthly crown refresh, our bespoke beauty vault ensures you arrive in style, confidence, and comfort.
-            </p>
-            <div>
-              <Link href="/book">
-                <Button
-                  className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-extrabold rounded-xl px-8 h-11 text-xs uppercase tracking-wider cursor-pointer shadow-sm"
-                >
-                  Book Your Treatment
-                </Button>
-              </Link>
-            </div>
+        <div className="max-w-7xl mx-auto w-full relative z-10 my-auto py-12 space-y-8 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold tracking-wider uppercase backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Accra&apos;s Premier Boutique Hotel &amp; Restaurant</span>
           </div>
-        </ScrollReveal>
-      </section>
 
-      {/* =========================================================================
-          SECTION 02: SIGNATURE VAULT COLLECTION (Numbered 02 with Filter Pills)
-      ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-8 py-16 lg:py-24 space-y-12 border-t border-zinc-200/60">
-        {/* Section Header with 02 Numeral */}
-        <ScrollReveal variant="fade-up">
-          <div className="flex items-center gap-6 sm:gap-10">
-            <span className="text-4xl sm:text-6xl font-poppins text-zinc-300 font-light select-none tracking-tight">
-              02
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-              Our vault collection
-            </h2>
-          </div>
-        </ScrollReveal>
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl leading-[1.08]">
+            An Oasis of Refinement, Culinary Art &amp; Luxury Stays.
+          </h1>
 
-        {/* Category Filter Pills (Matching ALL / SEDAN / LUXURY in Reference) */}
-        <ScrollReveal variant="fade-up" delayMs={100} className="w-full max-w-full min-w-0 overflow-hidden">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none w-full max-w-full">
-            {filterOptions.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => {
-                  setActiveFilter(f);
-                  setCarouselIndex(0);
-                }}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
-                  activeFilter === f
-                    ? "bg-[#18181B] text-white shadow-xs"
-                    : "bg-white hover:bg-zinc-100 text-zinc-600 border border-zinc-200/80"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </ScrollReveal>
+          <p className="text-base sm:text-lg text-neutral-300 max-w-2xl leading-relaxed">
+            Experience world-class hospitality nestled in Airport Residential Area. Ocean-view master suites, fine-dining gastronomy, and seamless mobile payments.
+          </p>
 
-        {/* Horizontal Treatment Spotlight Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTreatments.map((item, idx) => (
-            <ScrollReveal key={item.id} variant="fade-up" delayMs={idx * 80}>
-              <div
-                className="bg-white rounded-[26px] border border-zinc-200/80 p-5 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group h-full"
-              >
-                <div>
-                  {/* Header Info */}
-                  <div className="flex items-start justify-between pb-3">
-                    <div>
-                      <h3 className="font-bold text-sm text-zinc-900 group-hover:text-black">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-zinc-500 font-medium">
-                        <span className="font-poppins font-bold text-zinc-900 tracking-tight">{item.rate}</span>
-                        {" "}/ <span className="font-poppins text-zinc-500">{item.duration}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Visual Showcase */}
-                  <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden my-3 bg-zinc-100">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2 mt-2">
-                    {item.description}
-                  </p>
-                </div>
-
-                {/* Card Footer with Gold Circle Button */}
-                <div className="pt-4 mt-2 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                    Guaranteed Slot
-                  </span>
-                  <Link href={`/book?serviceId=${item.id}&step=2`}>
-                    <div className="flex items-center gap-2 text-xs font-extrabold text-zinc-900 hover:text-black group/btn cursor-pointer">
-                      <span>Book now</span>
-                      <div className="w-8 h-8 rounded-full bg-[#FACC15] flex items-center justify-center text-black group-hover/btn:scale-110 transition-transform shadow-xs">
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-
-        {/* Bottom Pagination & Full Menu Link */}
-        <ScrollReveal variant="fade-up" delayMs={150}>
-          <div className="flex items-center justify-between pt-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handlePrev}
-                className="w-9 h-9 rounded-full border border-zinc-300 bg-white flex items-center justify-center hover:bg-zinc-100 transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4 text-zinc-700" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="w-9 h-9 rounded-full border border-zinc-300 bg-white flex items-center justify-center hover:bg-zinc-100 transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4 text-zinc-700" />
-              </button>
-              <span className="text-xs text-zinc-500 font-medium pl-1">
-                <span className="font-poppins font-bold text-zinc-900">{filteredTreatments.length}</span> treatments available
-              </span>
-            </div>
-
-            <Link href="/our-services">
-              <Button
-                className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-extrabold rounded-xl px-5 h-9 text-xs uppercase tracking-wider cursor-pointer shadow-xs"
-              >
-                Open Full Menu
-              </Button>
-            </Link>
-          </div>
-        </ScrollReveal>
-      </section>
-
-      {/* =========================================================================
-          SECTION 03: THE STUDIO EXPERIENCE (Full Width, Full Black Background)
-      ========================================================================= */}
-      <section className="w-full max-w-full overflow-x-hidden bg-[#141210] text-white py-20 lg:py-28 my-16 lg:my-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-12 w-full max-w-full">
-          {/* Section Header with 03 Numeral */}
-          <ScrollReveal variant="fade-up">
-            <div className="flex items-center gap-6 sm:gap-10">
-              <span className="text-4xl sm:text-6xl font-poppins text-zinc-600 font-light select-none tracking-tight">
-                03
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                The studio experience
-              </h2>
-            </div>
-          </ScrollReveal>
-
-          {/* Split Layout: Editorial Left + 5 Vertical Story Cards Right */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center w-full max-w-full">
-            {/* Left Text Column */}
-            <ScrollReveal variant="fade-up" className="lg:col-span-4 space-y-6 w-full min-w-0">
-              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
-                Experience the height of luxury and privacy with Becca&apos;s Crown at our private VIP studio lounge. Private suites, chilled champagne, hospital-grade sanitized instruments, and prompt on-time service.
-              </p>
+          {/* Real-time Hotel Availability Search Bar */}
+          <Card className="p-4 sm:p-6 bg-neutral-900/90 border-neutral-800 rounded-3xl shadow-2xl backdrop-blur-xl max-w-4xl">
+            <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
               <div>
-                <Link href="/book">
-                  <Button
-                    className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-extrabold rounded-xl px-6 h-10 text-xs uppercase tracking-wider cursor-pointer shadow-xs"
-                  >
-                    Reserve Suite
+                <label className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                  Check-In
+                </label>
+                <input
+                  type="date"
+                  value={checkIn}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                  Check-Out
+                </label>
+                <input
+                  type="date"
+                  value={checkOut}
+                  min={checkIn || new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                  Adults
+                </label>
+                <select
+                  value={adults}
+                  onChange={(e) => setAdults(Number.parseInt(e.target.value, 10))}
+                  className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                >
+                  <option value={1}>1 Adult</option>
+                  <option value={2}>2 Adults</option>
+                  <option value={3}>3 Adults</option>
+                  <option value={4}>4 Adults</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1">
+                  Children
+                </label>
+                <select
+                  value={children}
+                  onChange={(e) => setChildren(Number.parseInt(e.target.value, 10))}
+                  className="w-full bg-neutral-950 border border-neutral-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                >
+                  <option value={0}>0 Children</option>
+                  <option value={1}>1 Child</option>
+                  <option value={2}>2 Children</option>
+                </select>
+              </div>
+
+              <div>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold h-11 rounded-xl shadow-lg shadow-amber-500/20 text-sm"
+                >
+                  Search Available Suites
+                </Button>
+              </div>
+            </form>
+          </Card>
+
+          {/* Trust Guarantees */}
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6 pt-2 text-xs text-neutral-400 font-medium">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Best Direct Rate Guarantee
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CreditCard className="w-4 h-4 text-amber-400" />
+              Paystack Card &amp; Mobile Money
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-amber-400" />
+              10-Minute Checkout Hold Lock
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 2. SIGNATURE SUITES SHOWCASE */}
+      {/* ------------------------------------------------------------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <div className="text-xs uppercase tracking-widest text-amber-600 font-bold">
+              Unrivalled Comfort
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1E1E1E] tracking-tight">
+              Featured Luxury Suites
+            </h2>
+            <p className="text-sm text-[#71717A] max-w-xl">
+              Each residence combines bespoke Ghanaian hardwood accents, Italian marble bathrooms, and panoramic balcony views.
+            </p>
+          </div>
+          <Link href="/rooms">
+            <Button variant="outline" className="border-black/10 text-xs font-bold gap-1 rounded-xl">
+              <span>View All Suites</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {FEATURED_SUITES.map((suite, idx) => (
+            <div
+              key={idx}
+              className="group bg-white rounded-3xl border border-black/10 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div className="space-y-4">
+                <div className="relative aspect-[16/10] overflow-hidden bg-neutral-100">
+                  <Image
+                    src={suite.image}
+                    alt={suite.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                  <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white">
+                    {suite.category}
+                  </div>
+                </div>
+
+                <div className="p-6 space-y-3">
+                  <h3 className="text-xl font-bold text-[#1E1E1E] group-hover:text-amber-700 transition-colors">
+                    {suite.title}
+                  </h3>
+                  <div className="text-xs text-[#71717A] flex items-center gap-1.5 font-medium">
+                    <Bed className="w-3.5 h-3.5 text-amber-600" />
+                    {suite.bedConfig}
+                  </div>
+                  <p className="text-xs text-[#71717A] leading-relaxed line-clamp-2">
+                    {suite.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {suite.amenities.map((am, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 rounded-md bg-neutral-100 text-[11px] font-medium text-neutral-700"
+                      >
+                        {am}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 pt-0 border-t border-neutral-100 flex items-center justify-between mt-4">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-neutral-400">Nightly Rate</div>
+                  <div className="text-xl font-black text-[#1E1E1E]">{suite.pricePerNight}</div>
+                </div>
+                <Link href={`/rooms/${suite.slug}`}>
+                  <Button size="sm" className="bg-[#1E1E1E] hover:bg-black text-white text-xs font-bold rounded-xl h-9">
+                    Explore Suite
                   </Button>
                 </Link>
               </div>
-            </ScrollReveal>
-
-            {/* Right Column: 5 Vertical Rounded Cards */}
-            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-5 gap-3 w-full min-w-0">
-              {VAULT_SUITES.map((suite, idx) => (
-                <ScrollReveal key={idx} variant="fade-up" delayMs={idx * 75}>
-                  <div
-                    className="group relative rounded-2xl overflow-hidden aspect-[9/18] bg-zinc-900 border border-white/10 shadow-lg"
-                  >
-                    <Image
-                      src={suite.image}
-                      alt={suite.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700 opacity-80"
-                      sizes="(max-width: 768px) 50vw, 20vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/35" />
-                    {/* Bottom Label */}
-                    <div className="absolute bottom-2.5 left-2 right-2 text-center text-white">
-                      <p className="text-[10px] font-bold text-amber-300">{suite.subtitle}</p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              ))}
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 3. RESTAURANT & LEISURE EXPERIENCES */}
+      {/* ------------------------------------------------------------- */}
+      <section className="bg-neutral-900 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold tracking-wider uppercase">
+              <UtensilsCrossed className="w-3.5 h-3.5" /> Gastronomy &amp; Leisure
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+              Culinary Artistry at Aura
+            </h2>
+            <p className="text-sm text-neutral-400 leading-relaxed">
+              From our morning champagne buffet to evening rooftop jazz and 24-hour in-suite dining, indulge in Accra&apos;s finest epicurean journeys.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {HOTEL_EXPERIENCES.map((exp, idx) => (
+              <div
+                key={idx}
+                className="bg-neutral-950 rounded-3xl border border-neutral-800 overflow-hidden shadow-lg flex flex-col justify-between"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <Image src={exp.image} alt={exp.title} fill className="object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-transparent" />
+                </div>
+                <div className="p-6 space-y-2">
+                  <div className="text-xs uppercase tracking-wider font-bold text-amber-400">
+                    {exp.subtitle}
+                  </div>
+                  <h3 className="text-xl font-bold text-white">{exp.title}</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">{exp.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* =========================================================================
-          VERIFIED CLIENT TESTIMONIALS
-      ========================================================================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
-        <ScrollReveal variant="fade-up">
-          <div className="bg-white rounded-3xl border border-zinc-200/80 p-8 sm:p-12 space-y-8 shadow-xs">
-            <div className="text-center max-w-xl mx-auto space-y-2">
-              <div className="flex items-center justify-center gap-1 text-amber-400">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <h2 className="text-xl sm:text-3xl font-black text-zinc-900 tracking-tight">
-                Loved by Brides & Tastemakers in Accra
-              </h2>
-              <p className="text-xs text-zinc-500">
-                Real feedback from appointments booked through our verified platform.
-              </p>
-            </div>
+      {/* ------------------------------------------------------------- */}
+      {/* 4. HOTEL AMENITIES GRID */}
+      {/* ------------------------------------------------------------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-[#1E1E1E]">
+            Curated Hotel Services
+          </h2>
+          <p className="text-xs sm:text-sm text-[#71717A]">
+            Designed to exceed the expectations of modern global travelers.
+          </p>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ScrollReveal variant="fade-up" delayMs={0}>
-                <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3 flex flex-col justify-between h-full">
-                  <p className="text-xs text-zinc-700 italic leading-relaxed">
-                    &ldquo;Held my bridal glam slot right from my phone and paid with MoMo. The team at East Legon was prompt and stunning.&rdquo;
-                  </p>
-                  <div>
-                    <p className="text-xs font-bold text-zinc-900">Akosua Mensah</p>
-                    <p className="text-[10px] text-zinc-400">Bride • Airport Residential</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-
-              <ScrollReveal variant="fade-up" delayMs={150}>
-                <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3 flex flex-col justify-between h-full">
-                  <p className="text-xs text-zinc-700 italic leading-relaxed">
-                    &ldquo;Best frontal melting in Accra! My install lasted over a month with no lifting. Zero waiting time—they start right on the dot.&rdquo;
-                  </p>
-                  <div>
-                    <p className="text-xs font-bold text-zinc-900">Nana Yaa Boateng</p>
-                    <p className="text-[10px] text-zinc-400">Event Host • East Legon</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-
-              <ScrollReveal variant="fade-up" delayMs={300}>
-                <div className="p-5 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3 flex flex-col justify-between h-full">
-                  <p className="text-xs text-zinc-700 italic leading-relaxed">
-                    &ldquo;The jelly pedicure and Russian volume lashes in the private VIP suite were pure bliss. Clean, serene, and ultra-hygienic.&rdquo;
-                  </p>
-                  <div>
-                    <p className="text-xs font-bold text-zinc-900">Dr. Evelyn Addo</p>
-                    <p className="text-[10px] text-zinc-400">Cantonments, Accra</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 text-center space-y-2">
+            <Wifi className="w-6 h-6 mx-auto text-amber-600" />
+            <div className="font-bold text-sm text-[#1E1E1E]">Gigabit Fiber Wi-Fi</div>
+            <div className="text-xs text-[#71717A]">Unlimited throughout the property</div>
           </div>
-        </ScrollReveal>
+
+          <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 text-center space-y-2">
+            <MapPin className="w-6 h-6 mx-auto text-amber-600" />
+            <div className="font-bold text-sm text-[#1E1E1E]">Airport Chauffeur</div>
+            <div className="text-xs text-[#71717A]">10 minutes from Kotoka (ACC)</div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 text-center space-y-2">
+            <Waves className="w-6 h-6 mx-auto text-amber-600" />
+            <div className="font-bold text-sm text-[#1E1E1E]">Heated Pool &amp; Spa</div>
+            <div className="text-xs text-[#71717A]">Full wellness treatment center</div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-neutral-50 border border-neutral-200/60 text-center space-y-2">
+            <Clock className="w-6 h-6 mx-auto text-amber-600" />
+            <div className="font-bold text-sm text-[#1E1E1E]">24/7 Front Desk</div>
+            <div className="text-xs text-[#71717A]">Express check-in and concierge</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. CALL TO ACTION BANNER */}
+      {/* ------------------------------------------------------------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-neutral-900 to-black text-white border border-neutral-800 text-center space-y-6 relative overflow-hidden shadow-2xl">
+          <div className="max-w-2xl mx-auto space-y-3 relative z-10">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+              Ready for an Unforgettable Stay in Accra?
+            </h2>
+            <p className="text-sm text-neutral-300 leading-relaxed">
+              Book directly online for guaranteed lowest rates, instant mobile money confirmation, and complimentary airport chauffeur on multi-night stays.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 relative z-10">
+            <Link href="/rooms">
+              <Button className="bg-amber-500 hover:bg-amber-600 text-black font-extrabold px-8 h-12 rounded-xl text-sm shadow-xl shadow-amber-500/20">
+                Browse All Suites
+              </Button>
+            </Link>
+            <Link href="/manage">
+              <Button variant="outline" className="border-neutral-700 text-neutral-200 hover:text-white px-8 h-12 rounded-xl text-sm">
+                Manage Existing Stay
+              </Button>
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );

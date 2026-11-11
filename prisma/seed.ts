@@ -724,8 +724,154 @@ async function main() {
     },
   });
 
-  // 8. Studio operational catalogue ready (No dummy customers)
-  console.log("✅ Seed completed successfully with clean operational catalogue!");
+  // 8. Hotel Domain Seed Data (RoomTypes, Operational Rooms & Extras)
+  console.log("🏨 Seeding Hotel RoomTypes and Rooms...");
+
+  const deluxeSuite = await prisma.roomType.upsert({
+    where: { slug: "deluxe-king-suite" },
+    update: {},
+    create: {
+      name: "Deluxe King Suite",
+      slug: "deluxe-king-suite",
+      description:
+        "Spacious master suite featuring a plush California King bed, private ocean-facing balcony, marble en-suite bathroom with soaking tub, and high-speed fiber Wi-Fi.",
+      maxAdults: 2,
+      maxChildren: 1,
+      bedConfiguration: "1 California King Bed",
+      basePricePesewas: 120000, // GH₵ 1,200.00 / night
+      amenities: [
+        "King Bed",
+        "Ocean View",
+        "Private Balcony",
+        "Marble Bathroom",
+        "High-Speed Wi-Fi",
+        "Nespresso Bar",
+        "24/7 Room Service",
+      ],
+      imageUrls: [
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+      ],
+      isActive: true,
+      sortOrder: 1,
+      rooms: {
+        create: [
+          { number: "101", floor: 1, status: "CLEAN", notes: "East Wing garden access" },
+          { number: "102", floor: 1, status: "CLEAN", notes: "East Wing poolside" },
+          { number: "103", floor: 1, status: "CLEAN", notes: "East Wing corner suite" },
+        ],
+      },
+    },
+  });
+
+  const execSuite = await prisma.roomType.upsert({
+    where: { slug: "executive-panoramic-suite" },
+    update: {},
+    create: {
+      name: "Executive Panoramic Suite",
+      slug: "executive-panoramic-suite",
+      description:
+        "Floor-to-ceiling glass suite on executive floors with expansive skyline vistas, separate lounge salon, dedicated workstation, and complimentary lounge access.",
+      maxAdults: 2,
+      maxChildren: 2,
+      bedConfiguration: "1 King Bed + 1 Daybed",
+      basePricePesewas: 185000, // GH₵ 1,850.00 / night
+      amenities: [
+        "Panoramic Skyline Views",
+        "Executive Lounge Access",
+        "Private Living Area",
+        "Ergonomic Work Desk",
+        "Rain Shower",
+        "Bespoke Minibar",
+      ],
+      imageUrls: [
+        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80",
+      ],
+      isActive: true,
+      sortOrder: 2,
+      rooms: {
+        create: [
+          { number: "201", floor: 2, status: "CLEAN", notes: "Executive floor ocean view" },
+          { number: "202", floor: 2, status: "CLEAN", notes: "Executive floor sunset view" },
+          { number: "203", floor: 2, status: "CLEAN", notes: "Executive floor corner view" },
+        ],
+      },
+    },
+  });
+
+  const penthouse = await prisma.roomType.upsert({
+    where: { slug: "royal-presidential-penthouse" },
+    update: {},
+    create: {
+      name: "Royal Presidential Penthouse",
+      slug: "royal-presidential-penthouse",
+      description:
+        "The crown jewel of Accra hospitality. Dual master bedrooms, private rooftop terrace with heated plunge pool, personal butler service, and private dining room for eight.",
+      maxAdults: 4,
+      maxChildren: 2,
+      bedConfiguration: "2 King Beds",
+      basePricePesewas: 450000, // GH₵ 4,500.00 / night
+      amenities: [
+        "Private Plunge Pool",
+        "Personal Butler",
+        "Rooftop Terrace",
+        "Formal Dining Salon",
+        "Chef's Kitchen",
+        "Airport Chauffeur",
+      ],
+      imageUrls: [
+        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80",
+      ],
+      isActive: true,
+      sortOrder: 3,
+      rooms: {
+        create: [
+          { number: "301", floor: 3, status: "CLEAN", notes: "Penthouse top floor" },
+        ],
+      },
+    },
+  });
+
+  // Seed Room Extras
+  const airportTransfer = await prisma.roomExtra.upsert({
+    where: { id: "extra-airport-transfer-001" },
+    update: {},
+    create: {
+      id: "extra-airport-transfer-001",
+      name: "VIP Airport Chauffeur Transfer (Kotoka International)",
+      pricePesewas: 35000, // GH₵ 350.00
+      pricing: "PER_STAY",
+      isActive: true,
+    },
+  });
+
+  const champagneBreakfast = await prisma.roomExtra.upsert({
+    where: { id: "extra-champagne-breakfast-002" },
+    update: {},
+    create: {
+      id: "extra-champagne-breakfast-002",
+      name: "Daily Gourmet Champagne Breakfast",
+      pricePesewas: 18000, // GH₵ 180.00
+      pricing: "PER_PERSON",
+      isActive: true,
+    },
+  });
+
+  const lateCheckout = await prisma.roomExtra.upsert({
+    where: { id: "extra-late-checkout-003" },
+    update: {},
+    create: {
+      id: "extra-late-checkout-003",
+      name: "Guaranteed Late Check-Out (3:00 PM)",
+      pricePesewas: 25000, // GH₵ 250.00
+      pricing: "PER_STAY",
+      isActive: true,
+    },
+  });
+
+  console.log("✅ Seed completed successfully with clean operational catalogue and hotel rooms!");
 }
 
 main()

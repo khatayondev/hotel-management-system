@@ -23,8 +23,11 @@ export interface ReconcileResult {
   alreadyProcessed: boolean;
   paymentId: string;
   bookingId?: string | null;
+  reservationId?: string | null;
+  reservationReference?: string | null;
   paymentStatus: PaymentStatusType;
   bookingStatus?: BookingStatusType;
+  reservationStatus?: string;
   amountPaidPesewas: number;
   message: string;
 }
@@ -102,6 +105,9 @@ export async function reconcilePaymentTransaction(
       });
 
       let updatedBookingStatus: BookingStatusType | undefined;
+      let reservationId: string | null = (providerResult.metadata?.reservationId as string) || null;
+      let reservationReference: string | undefined = providerResult.metadata?.reservationReference as string | undefined;
+      let updatedReservationStatus: string | undefined;
       let customerPhone: string | undefined;
       let customerEmail: string | undefined;
       let customerName: string | undefined;
@@ -181,6 +187,99 @@ export async function reconcilePaymentTransaction(
           });
           if (firstItem?.service?.name) {
             bookingServiceName = firstItem.service.name;
+          }
+        }
+      }
+
+      // 4b. Update associated Hotel Reservation if attached
+      if (!reservationId && payment.reference) {
+        const matchingRes = await tx.reservation.findFirst({
+          where: {
+            OR: [
+              { reference: payment.reference },
+              ...(reservationReference ? [{ reference: reservationReference }] : []),
+            ],
+          },
+        });
+        if (matchingRes) {
+          reservationId = matchingRes.id;
+          reservationReference = matchingRes.reference;
+        }
+      }
+
+      if (reservationId) {
+        const reservation = await tx.reservation.findUnique({
+          where: { id: reservationId },
+          include: { guest: true, folios: true },
+        });
+
+        if (reservation) {
+          reservationReference = reservation.reference;
+          const newAmountPaid = reservation.amountPaidPesewas + payment.amountPesewas;
+          let nextReservationStatus = reservation.status;
+
+          if (
+            reservation.status === "PENDING_PAYMENT" &&
+            newAmountPaid >= reservation.depositRequiredPesewas
+          ) {
+            nextReservationStatus = "CONFIRMED";
+          }
+
+          await tx.reservation.update({
+            where: { id: reservation.id },
+            data: {
+              amountPaidPesewas: newAmountPaid,
+              status: nextReservationStatus,
+            },
+          });
+
+          updatedReservationStatus = nextReservationStatus;
+
+          if (nextReservationStatus === "CONFIRMED") {
+            await tx.reservationRoom.updateMany({
+              where: { reservationId: reservation.id },
+              data: { status: "CONFIRMED" },
+            });
+          }
+
+          if (reservation.folios.length > 0) {
+            const folio = reservation.folios[0];
+            await tx.folioCharge.create({
+              data: {
+                folioId: folio.id,
+                description: `Online Payment (${providerResult.channel || "PAYSTACK"}) - Ref: ${reference}`,
+                source: "PAYMENT",
+                amountPesewas: payment.amountPesewas,
+                referenceId: reference,
+              },
+            });
+          }
+
+          // Release room hold if hold token matches
+          const holdToken = (providerResult.metadata?.holdToken as string) || reference;
+          await tx.roomHold.deleteMany({
+            where: {
+              OR: [
+                { token: holdToken },
+                { token: reference },
+              ],
+            },
+          });
+
+          // Dispatch SMS for hotel confirmation
+          if (reservation.guest?.phone && nextReservationStatus === "CONFIRMED") {
+            try {
+              const { env } = await import("@/lib/env");
+              const checkInStr = reservation.checkInDate.toISOString().slice(0, 10);
+              const remainingPesewas = Math.max(0, reservation.totalPesewas - newAmountPaid);
+              const manageUrl = `${env.APP_URL}/manage/${reservation.reference}`;
+              await sendSms({
+                recipient: reservation.guest.phone,
+                message: `Aura Royal Hotel: Your stay (${reservation.reference}) is CONFIRMED! Check-in: ${checkInStr}. Balance due: ${formatPesewas(remainingPesewas)}. Manage your stay: ${manageUrl}`,
+              });
+            } catch (smsErr) {
+              logger.warn(`Failed to dispatch hotel confirmation SMS for ${reservation.reference}`, { error: smsErr });
+            }
           }
         }
       }
@@ -289,8 +388,11 @@ export async function reconcilePaymentTransaction(
         alreadyProcessed: false,
         paymentId: payment.id,
         bookingId: payment.bookingId,
+        reservationId,
+        reservationReference,
         paymentStatus: "PAID",
         bookingStatus: updatedBookingStatus,
+        reservationStatus: updatedReservationStatus,
         amountPaidPesewas: payment.amountPesewas,
         message: "Payment successfully reconciled and booking updated",
       };

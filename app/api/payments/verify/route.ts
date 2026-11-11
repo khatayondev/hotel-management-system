@@ -57,6 +57,43 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Direct lookup if reference is a hotel reservation reference
+    const directReservation = await prisma.reservation.findUnique({
+      where: { reference },
+      include: {
+        guest: true,
+        rooms: { include: { roomType: true, room: true } },
+        extras: { include: { extra: true } },
+      },
+    });
+
+    if (directReservation) {
+      return successResponse({
+        verified: true,
+        status: directReservation.status,
+        isHotel: true,
+        reservation: {
+          id: directReservation.id,
+          reference: directReservation.reference,
+          status: directReservation.status,
+          checkInDate: directReservation.checkInDate,
+          checkOutDate: directReservation.checkOutDate,
+          adults: directReservation.adults,
+          children: directReservation.children,
+          totalPesewas: directReservation.totalPesewas,
+          depositRequiredPesewas: directReservation.depositRequiredPesewas,
+          amountPaidPesewas: directReservation.amountPaidPesewas,
+          guestName: directReservation.guest.name,
+          guestPhone: directReservation.guest.phone,
+          rooms: directReservation.rooms.map((r) => ({
+            roomTypeName: r.roomType.name,
+            roomNumber: r.room?.number || "To be assigned at check-in",
+          })),
+        },
+        message: "Reservation retrieved successfully",
+      });
+    }
+
     // 1. Fetch provider status safely
     let providerResult;
     try {
@@ -109,13 +146,51 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    let reservationData = null;
+    const resIdOrRef = reconcileResult.reservationId || reconcileResult.reservationReference;
+    if (resIdOrRef) {
+      const res = await prisma.reservation.findFirst({
+        where: {
+          OR: [{ id: resIdOrRef }, { reference: resIdOrRef }],
+        },
+        include: {
+          guest: true,
+          rooms: { include: { roomType: true, room: true } },
+        },
+      });
+
+      if (res) {
+        reservationData = {
+          id: res.id,
+          reference: res.reference,
+          status: res.status,
+          checkInDate: res.checkInDate,
+          checkOutDate: res.checkOutDate,
+          adults: res.adults,
+          children: res.children,
+          totalPesewas: res.totalPesewas,
+          depositRequiredPesewas: res.depositRequiredPesewas,
+          amountPaidPesewas: res.amountPaidPesewas,
+          guestName: res.guest.name,
+          guestPhone: res.guest.phone,
+          rooms: res.rooms.map((r) => ({
+            roomTypeName: r.roomType.name,
+            roomNumber: r.room?.number || "To be assigned at check-in",
+          })),
+        };
+      }
+    }
+
     return successResponse({
       verified: reconcileResult.success,
       alreadyProcessed: reconcileResult.alreadyProcessed,
       paymentStatus: reconcileResult.paymentStatus,
       bookingStatus: reconcileResult.bookingStatus,
+      reservationStatus: reconcileResult.reservationStatus,
       amountPaidPesewas: reconcileResult.amountPaidPesewas,
       booking: bookingData,
+      isHotel: Boolean(reservationData),
+      reservation: reservationData,
       message: reconcileResult.message,
     });
   } catch (err) {

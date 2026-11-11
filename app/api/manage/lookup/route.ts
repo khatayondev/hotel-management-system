@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
-import { successResponse, handleRouteError } from "@/lib/api-response";
+import { successResponse, errorResponse, handleRouteError } from "@/lib/api-response";
 import { getClientIp } from "@/lib/rate-limit";
 import { lookupBookingByReferenceAndPhone, verifyLookupOtp } from "@/lib/self-service/service";
+import { normalizeGhanaPhone } from "@/lib/sms";
 
 const lookupSchema = z.object({
   reference: z.string().min(3, "Booking reference is required"),
@@ -17,6 +18,42 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = lookupSchema.parse(body);
     const clientIp = getClientIp(req);
+    const cleanRef = parsed.reference.trim().toUpperCase();
+
+    // Check hotel reservation first
+    const hotelReservation = await prisma.reservation.findUnique({
+      where: { reference: cleanRef },
+      include: { guest: true, rooms: { include: { roomType: true } } },
+    });
+
+    if (hotelReservation) {
+      const normInputPhone = normalizeGhanaPhone(parsed.phone);
+      const normGuestPhone = normalizeGhanaPhone(hotelReservation.guest.phone || "");
+
+      if (normInputPhone !== normGuestPhone) {
+        return errorResponse("No reservation found matching reference and phone number.", "NOT_FOUND", 404);
+      }
+
+      if (parsed.otp) {
+        verifyLookupOtp(cleanRef, parsed.phone, parsed.otp);
+      }
+
+      return successResponse({
+        isHotel: true,
+        reservation: {
+          id: hotelReservation.id,
+          reference: hotelReservation.reference,
+          status: hotelReservation.status,
+          guestName: hotelReservation.guest.name,
+          checkInDate: hotelReservation.checkInDate,
+          checkOutDate: hotelReservation.checkOutDate,
+          totalPesewas: hotelReservation.totalPesewas,
+          amountPaidPesewas: hotelReservation.amountPaidPesewas,
+        },
+        manageToken: cleanRef,
+        manageUrl: `/manage/${cleanRef}`,
+      });
+    }
 
     // If OTP provided, verify OTP
     if (parsed.otp) {

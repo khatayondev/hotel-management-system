@@ -10,6 +10,67 @@ export async function POST(
 ) {
   try {
     const { token } = await props.params;
+    const cleanToken = token.trim().toUpperCase();
+
+    // Check hotel reservation first
+    const hotelReservation = await prisma.reservation.findFirst({
+      where: {
+        OR: [{ reference: cleanToken }, { id: token }],
+      },
+      include: { guest: true },
+    });
+
+    if (hotelReservation) {
+      const balanceDuePesewas = Math.max(
+        0,
+        hotelReservation.totalPesewas - hotelReservation.amountPaidPesewas
+      );
+
+      if (balanceDuePesewas <= 0) {
+        throw new AppError("No outstanding balance due for this reservation.", 400, "NO_BALANCE_DUE");
+      }
+
+      if (hotelReservation.status === "CANCELLED") {
+        throw new AppError("Cannot pay balance for a cancelled reservation.", 400, "RESERVATION_CANCELLED");
+      }
+
+      const paystackRef = `BAL-HOTEL-${hotelReservation.reference}-${Date.now().toString().slice(-6)}`;
+      const provider = getPaymentProvider();
+      const guestEmail = hotelReservation.guest.email || `guest-${hotelReservation.guest.phone.replace("+", "")}@hotel.gh`;
+
+      const initResult = await provider.initialize({
+        reference: paystackRef,
+        amountPesewas: balanceDuePesewas,
+        email: guestEmail,
+        currency: "GHS",
+        channels: ["card", "mobile_money"],
+        callbackUrl: `${req.nextUrl.origin}/manage/${token}?payment=success&ref=${paystackRef}`,
+        metadata: {
+          reservationId: hotelReservation.id,
+          reservationReference: hotelReservation.reference,
+          paymentType: "BALANCE",
+        },
+      });
+
+      await prisma.payment.create({
+        data: {
+          bookingId: null,
+          reference: paystackRef,
+          amountPesewas: balanceDuePesewas,
+          currency: "GHS",
+          status: "PENDING",
+          channel: "PAYSTACK",
+        },
+      });
+
+      return successResponse({
+        isHotel: true,
+        authorizationUrl: initResult.authorizationUrl,
+        reference: paystackRef,
+        amountPesewas: balanceDuePesewas,
+      });
+    }
+
     const booking = await getBookingByManageToken(token);
 
     if (booking.balanceDuePesewas <= 0) {
