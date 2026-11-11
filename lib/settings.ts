@@ -106,6 +106,10 @@ export const updateSettingsSchema = z.object({
     .string()
     .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid restaurant close time (HH:MM)")
     .optional(),
+
+  // KDS Thresholds
+  kdsAmberMinutes: z.number().int().min(1).max(120).optional(),
+  kdsRedMinutes: z.number().int().min(1).max(240).optional(),
 });
 
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
@@ -243,6 +247,14 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
   const restaurantCloseTime =
     map.get("restaurant_close_time") || DEFAULT_BUSINESS_SETTINGS.restaurantCloseTime;
 
+  const kdsAmberMinutes = map.has("kds_amber_minutes")
+    ? Number.parseInt(map.get("kds_amber_minutes")!, 10)
+    : DEFAULT_BUSINESS_SETTINGS.kdsAmberMinutes;
+
+  const kdsRedMinutes = map.has("kds_red_minutes")
+    ? Number.parseInt(map.get("kds_red_minutes")!, 10)
+    : DEFAULT_BUSINESS_SETTINGS.kdsRedMinutes;
+
   return {
     businessName,
     businessLogo,
@@ -271,6 +283,8 @@ export async function getSettings(options?: GetSettingsOptions): Promise<Busines
     taxes,
     restaurantOpenTime,
     restaurantCloseTime,
+    kdsAmberMinutes,
+    kdsRedMinutes,
   };
 }
 
@@ -468,6 +482,20 @@ export async function saveSettings(
       key: "restaurant_close_time",
       value: parsed.restaurantCloseTime,
       description: "Restaurant daily closing time (HH:MM)",
+    });
+  }
+  if (parsed.kdsAmberMinutes !== undefined) {
+    entriesToUpsert.push({
+      key: "kds_amber_minutes",
+      value: parsed.kdsAmberMinutes.toString(),
+      description: "KDS warning timer threshold in minutes",
+    });
+  }
+  if (parsed.kdsRedMinutes !== undefined) {
+    entriesToUpsert.push({
+      key: "kds_red_minutes",
+      value: parsed.kdsRedMinutes.toString(),
+      description: "KDS critical timer threshold in minutes",
     });
   }
 

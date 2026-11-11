@@ -68,6 +68,10 @@ export default function SettingsPage() {
   const [freeCancelHoursBeforeCheckIn, setFreeCancelHoursBeforeCheckIn] = React.useState("24");
   const [cancellationPenaltyPercent, setCancellationPenaltyPercent] = React.useState("50");
   const [taxes, setTaxes] = React.useState<TaxSetting[]>([]);
+  const [restaurantOpenTime, setRestaurantOpenTime] = React.useState("07:00");
+  const [restaurantCloseTime, setRestaurantCloseTime] = React.useState("22:00");
+  const [kdsAmberMinutes, setKdsAmberMinutes] = React.useState("10");
+  const [kdsRedMinutes, setKdsRedMinutes] = React.useState("20");
 
   const [openingHours, setOpeningHours] = React.useState<DaySchedule[]>([]);
   const [holidays, setHolidays] = React.useState<Holiday[]>([]);
@@ -116,6 +120,10 @@ export default function SettingsPage() {
           setFreeCancelHoursBeforeCheckIn((data.freeCancelHoursBeforeCheckIn ?? 24).toString());
           setCancellationPenaltyPercent((data.cancellationPenaltyPercent ?? 50).toString());
           setTaxes(data.taxes || []);
+          setRestaurantOpenTime(data.restaurantOpenTime || "07:00");
+          setRestaurantCloseTime(data.restaurantCloseTime || "22:00");
+          setKdsAmberMinutes((data.kdsAmberMinutes ?? 10).toString());
+          setKdsRedMinutes((data.kdsRedMinutes ?? 20).toString());
 
           setOpeningHours(data.openingHours || []);
           setHolidays(data.holidays || []);
@@ -190,6 +198,10 @@ export default function SettingsPage() {
         freeCancelHoursBeforeCheckIn: Number.parseInt(freeCancelHoursBeforeCheckIn || "24", 10),
         cancellationPenaltyPercent: Number.parseFloat(cancellationPenaltyPercent || "50"),
         taxes,
+        restaurantOpenTime: restaurantOpenTime.trim(),
+        restaurantCloseTime: restaurantCloseTime.trim(),
+        kdsAmberMinutes: Number.parseInt(kdsAmberMinutes || "10", 10),
+        kdsRedMinutes: Number.parseInt(kdsRedMinutes || "20", 10),
       };
 
       // Only include payment keys if Owner and not masked
@@ -463,6 +475,68 @@ export default function SettingsPage() {
                     />
                     <p className="text-[10px] text-[#A1A1AA] mt-1">
                       Percentage of the stay charged as penalty if cancelled after the free cutoff ({cancellationPenaltyPercent}%).
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Restaurant Open Time (HH:MM) *</Label>
+                    <Input
+                      type="text"
+                      disabled={isReadOnly}
+                      required
+                      placeholder="07:00"
+                      value={restaurantOpenTime}
+                      onChange={(e) => setRestaurantOpenTime(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Public orders outside these hours are rejected.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Restaurant Close Time (HH:MM) *</Label>
+                    <Input
+                      type="text"
+                      disabled={isReadOnly}
+                      required
+                      placeholder="22:00"
+                      value={restaurantCloseTime}
+                      onChange={(e) => setRestaurantCloseTime(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      Supports overnight hours (e.g. 18:00 - 02:00).
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>KDS Warning Timer (Minutes) *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="120"
+                      disabled={isReadOnly}
+                      required
+                      value={kdsAmberMinutes}
+                      onChange={(e) => setKdsAmberMinutes(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      KDS ticket timer turns amber/orange.
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>KDS Critical Timer (Minutes) *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="240"
+                      disabled={isReadOnly}
+                      required
+                      value={kdsRedMinutes}
+                      onChange={(e) => setKdsRedMinutes(e.target.value)}
+                    />
+                    <p className="text-[10px] text-[#A1A1AA] mt-1">
+                      KDS ticket timer turns critical red.
                     </p>
                   </div>
                 </div>

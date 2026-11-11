@@ -7,3 +7,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS "RestaurantOrder_trackingToken_key" ON "Restau
 CREATE UNIQUE INDEX IF NOT EXISTS "RestaurantOrder_paystackReference_key" ON "RestaurantOrder"("paystackReference");
 CREATE INDEX IF NOT EXISTS "RestaurantOrder_trackingToken_idx" ON "RestaurantOrder"("trackingToken");
 CREATE INDEX IF NOT EXISTS "RestaurantOrder_paystackReference_idx" ON "RestaurantOrder"("paystackReference");
+

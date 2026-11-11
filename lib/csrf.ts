@@ -27,3 +27,4 @@ export function validateCsrf(req: NextRequest): void {
     }
   }
 }
+

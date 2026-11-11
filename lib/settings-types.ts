@@ -82,6 +82,10 @@ export interface BusinessSettings {
   // 10. Restaurant Opening Hours
   restaurantOpenTime: string; // HH:MM e.g. "07:00"
   restaurantCloseTime: string; // HH:MM e.g. "22:00"
+
+  // 11. Kitchen Display System (KDS) Thresholds
+  kdsAmberMinutes: number; // default 10
+  kdsRedMinutes: number; // default 20
 }
 
 export const DEFAULT_OPENING_HOURS: DaySchedule[] = [
@@ -131,4 +135,6 @@ export const DEFAULT_BUSINESS_SETTINGS: BusinessSettings = {
   taxes: [],
   restaurantOpenTime: "07:00",
   restaurantCloseTime: "22:00",
+  kdsAmberMinutes: 10,
+  kdsRedMinutes: 20,
 };

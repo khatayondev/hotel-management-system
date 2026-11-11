@@ -31,3 +31,4 @@ export async function GET(req: NextRequest) {
     return handleRouteError(err);
   }
 }
+

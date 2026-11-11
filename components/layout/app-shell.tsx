@@ -96,6 +96,13 @@ export function AppShell({
   const [profileDropdownOpen, setProfileDropdownOpen] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
 
+  // KITCHEN role access restriction: KITCHEN staff cannot open dashboard pages
+  React.useEffect(() => {
+    if (user && user.role === ROLES.KITCHEN) {
+      router.replace("/kitchen");
+    }
+  }, [user, router]);
+
   React.useEffect(() => {
     try {
       const savedFocus = localStorage.getItem("beccas_focus_mode");
@@ -341,10 +348,22 @@ export function AppShell({
       title: "Restaurant",
       items: [
         {
+          label: "Kitchen Display (KDS)",
+          href: "/kitchen",
+          icon: <Utensils className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.KITCHEN],
+        },
+        {
+          label: "Waiter Orders",
+          href: "/waiter",
+          icon: <Send className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.WAITER],
+        },
+        {
           label: "Menu & Items",
           href: "/restaurant/menu",
-          icon: <Utensils className="w-4 h-4" />,
-          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.WAITER, ROLES.KITCHEN],
+          icon: <ShoppingBag className="w-4 h-4" />,
+          allowedRoles: [ROLES.OWNER_ADMIN, ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.WAITER],
         },
         {
           label: "Dining Tables",
@@ -425,6 +444,25 @@ export function AppShell({
     if (item.requiredPermission && !hasPermission(item.requiredPermission)) return false;
     return true;
   };
+
+  if (user && user.role === ROLES.KITCHEN) {
+    return (
+      <div className="min-h-screen bg-neutral-950 text-white flex flex-col items-center justify-center space-y-4 p-6 text-center">
+        <Utensils className="w-14 h-14 text-amber-500 animate-pulse" />
+        <h2 className="text-xl font-bold tracking-tight">Kitchen Role Restricted</h2>
+        <p className="text-sm text-neutral-400 max-w-md">
+          Kitchen staff are restricted from viewing administrative dashboard pages. Redirecting to the Kitchen Display System...
+        </p>
+        <Button
+          variant="blackPill"
+          className="bg-amber-500 text-black hover:bg-amber-400 font-bold px-6 py-2"
+          onClick={() => router.replace("/kitchen")}
+        >
+          Open Kitchen Display
+        </Button>
+      </div>
+    );
+  }
 
   const visibleNavSections = navSections
     .map((section) => ({

@@ -132,6 +132,8 @@ export function middleware(request: NextRequest) {
     "/reports",
     "/audit",
     "/customers",
+    "/kitchen",
+    "/waiter",
   ];
   const isProtectedPath = protectedPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
